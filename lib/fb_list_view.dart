@@ -53,6 +53,12 @@ class FBListView<T extends Model> extends StatefulWidget {
   /// refresh the page.
   final Function(Future<void> Function()) refresher;
 
+  /// The header widget when refreshing.
+  final Widget headerWidget;
+
+  /// The footer widget when on paginate load.
+  final Widget footerWidget;
+
   /* -------------------------------- Firestore ------------------------------- */
 
   /// Firestore query.
@@ -100,6 +106,8 @@ class FBListView<T extends Model> extends StatefulWidget {
     this.debugEmptyList = false,
     this.onFetchCatch,
     this.refresher,
+    this.headerWidget,
+    this.footerWidget,
   })  : _type = _Type.cloudFirestore,
         this.dbQuery = null,
         this.forEachJson = null,
@@ -121,6 +129,8 @@ class FBListView<T extends Model> extends StatefulWidget {
     this.debugEmptyList = false,
     this.onFetchCatch,
     this.refresher,
+    this.headerWidget,
+    this.footerWidget,
   })  : assert(!(dbQuery == null && dbReference == null)),
         _type = _Type.realtimeDatabase,
         this.fsQuery = null,
@@ -312,8 +322,8 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>>
             controller: _refreshController,
             enablePullDown: this.widget.isReverse ? false : true,
             enablePullUp: true,
-            header: FBListView.waterDropHeader(),
-            footer: FBListView.emptyFooter(),
+            header: this.widget.headerWidget ?? FBListView.waterDropHeader(),
+            footer: this.widget.footerWidget ?? FBListView.emptyFooter(),
             onRefresh: () => _onRefresh(),
             onLoading: () => _onLoading(),
             physics:
