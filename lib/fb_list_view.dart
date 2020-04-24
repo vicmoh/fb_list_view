@@ -182,7 +182,7 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>>
     try {
       return callbackToBeCatch();
     } catch (err) {
-      _printErr(err: err, isItem: true);
+      _printErr(err, isItem: true);
       return null;
     }
   }
@@ -192,14 +192,19 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>>
       _realtimeDatabaseSubscription = this
           .widget
           ?.dbReference
+          ?.limitToLast(1)
           ?.endAt(items?.first?.id)
           ?.onChildAdded
           ?.listen((event) async {
-        addItems([
-          await _onCatchItem(() async => await this.widget.forEachJson(
-              event.snapshot.key,
-              Map<String, dynamic>.from(event.snapshot.value))),
-        ]);
+        try {
+          addItems([
+            await _onCatchItem(() async => await this.widget.forEachJson(
+                event?.snapshot?.key,
+                Map<String, dynamic>.from(event?.snapshot?.value))),
+          ]);
+        } catch (err) {
+          _printErr(err, isItem: true);
+        }
         setState(() => _isLoading = false);
       });
   }
@@ -210,8 +215,13 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>>
           this.widget?.fsQuery?.snapshots()?.listen((data) async {
         addItems(List<T>.from(
             await Future.wait<T>(data.documentChanges.map((docChange) async {
-              return await _onCatchItem(() async =>
-                  await this.widget.forEachSnap(docChange.document));
+              try {
+                return await _onCatchItem(() async =>
+                    await this.widget.forEachSnap(docChange.document));
+              } catch (err) {
+                _printErr(err, isItem: true);
+                return null;
+              }
             })),
             growable: true));
         if (this.widget.orderBy != null) items.sort(this.widget.orderBy);
@@ -233,14 +243,14 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>>
               ?.widget
               ?.forEachJson(each.key, Map<String, dynamic>.from(each.value));
         } catch (err) {
-          _printErr(err: err, isItem: true);
+          _printErr(err, isItem: true);
           return null;
         }
       }));
     } catch (err) {
       if (isNext) _refreshController?.loadNoData();
       if (this.widget.onFetchCatch != null) this.widget.onFetchCatch(err);
-      _printErr(err: err, isItem: false);
+      _printErr(err);
     }
     return data;
   }
@@ -257,20 +267,20 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>>
         try {
           return this.widget.forEachSnap(snap);
         } catch (err) {
-          _printErr(err: err, isItem: true);
+          _printErr(err, isItem: true);
           return null;
         }
       }));
     } catch (err) {
       if (isNext) _refreshController?.loadNoData();
       if (this.widget.onFetchCatch != null) this.widget.onFetchCatch(err);
-      _printErr(err: err, isItem: false);
+      _printErr(err);
     }
     return data;
   }
 
-  _printErr({err, bool isItem}) {
-    if (err == null || isItem == null) return;
+  _printErr(err, {bool isItem = false}) {
+    if (err == null) return;
     var message = isItem ? 'item' : 'list';
     Result.hasError(
         clientMessage: 'Could not fetch $message.',
