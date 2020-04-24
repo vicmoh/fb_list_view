@@ -17,7 +17,7 @@ dependencies:
 
   fb_list_view:
     git:
-      url: git://github.com/vicmoh/provider_skeleton.git
+      url: git://github.com/vicmoh/fb_list_view.git
       ref: v0.0.2
 
   #------------------------------------------------------
