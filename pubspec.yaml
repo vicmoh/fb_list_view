@@ -16,7 +16,7 @@ dev_dependencies:
   pull_to_refresh: ^1.5.8
 
   # Firebase
-  firebase_auth: ^0.15.3+1
+  firebase_auth: ^0.16.0
   firebase_database: ^3.1.1
   firebase_core: ^0.4.3+3
   firebase_messaging: ^6.0.9
