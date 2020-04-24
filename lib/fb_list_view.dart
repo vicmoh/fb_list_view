@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:cloud_firestore/cloud_firestore.dart' as _fs;
 import 'package:firebase_database/firebase_database.dart' as _db;
+import 'package:dart_util/dart_util.dart';
 import 'package:provider_skeleton/provider_skeleton.dart';
 
 /// The list view type that can be used.
@@ -44,8 +45,13 @@ class FBListView<T extends Model> extends StatefulWidget {
   /// This is meant for debugging purposes.
   final bool debugEmptyList;
 
-  /// When fetch is failed, it got to callback.
+  /// On error on fetching, all catches
+  /// when fetching will be on this callback.
   final Function(dynamic) onFetchCatch;
+
+  /// A call back that will the function to
+  /// refresh the page.
+  final Function(Future<void> Function()) refresher;
 
   /* -------------------------------- Firestore ------------------------------- */
 
@@ -93,6 +99,7 @@ class FBListView<T extends Model> extends StatefulWidget {
     this.fetchDelay = 0,
     this.debugEmptyList = false,
     this.onFetchCatch,
+    this.refresher,
   })  : _type = _Type.cloudFirestore,
         this.dbQuery = null,
         this.forEachJson = null,
@@ -113,6 +120,7 @@ class FBListView<T extends Model> extends StatefulWidget {
     this.fetchDelay = 0,
     this.debugEmptyList = false,
     this.onFetchCatch,
+    this.refresher,
   })  : assert(!(dbQuery == null && dbReference == null)),
         _type = _Type.realtimeDatabase,
         this.fsQuery = null,
@@ -169,33 +177,46 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>>
     _refreshController?.loadComplete();
   }
 
+  _onCatchItem(Function() callbackToBeCatch) {
+    assert(callbackToBeCatch != null);
+    try {
+      return callbackToBeCatch();
+    } catch (err) {
+      _printErr(err: err, isItem: true);
+      return null;
+    }
+  }
+
   Future<void> _realtimeDatabaseListen() async {
-    _realtimeDatabaseSubscription = this
-        .widget
-        ?.dbReference
-        ?.endAt(items?.first?.id)
-        ?.onChildAdded
-        ?.listen((event) async {
-      addItems([
-        await this.widget.forEachJson(
-            event.snapshot.key, Map<String, dynamic>.from(event.snapshot.value))
-      ]);
-      setState(() => _isLoading = false);
-    });
+    if (items.length != 0 && items?.first?.id != null)
+      _realtimeDatabaseSubscription = this
+          .widget
+          ?.dbReference
+          ?.endAt(items?.first?.id)
+          ?.onChildAdded
+          ?.listen((event) async {
+        addItems([
+          await _onCatchItem(() async => await this.widget.forEachJson(
+              event.snapshot.key,
+              Map<String, dynamic>.from(event.snapshot.value))),
+        ]);
+        setState(() => _isLoading = false);
+      });
   }
 
   Future<void> _cloudFirestoreListen() async {
-    _cloudFirestoreSubscription =
-        this.widget.fsQuery.snapshots().listen((data) async {
-      addItems(List<T>.from(
-          await Future.wait<T>(data.documentChanges.map((docChange) async {
-            var data = await this.widget.forEachSnap(docChange.document);
-            return data;
-          })),
-          growable: true));
-      if (this.widget.orderBy != null) items.sort(this.widget.orderBy);
-      setState(() => _isLoading = false);
-    });
+    if (items.length != 0)
+      _cloudFirestoreSubscription =
+          this.widget?.fsQuery?.snapshots()?.listen((data) async {
+        addItems(List<T>.from(
+            await Future.wait<T>(data.documentChanges.map((docChange) async {
+              return await _onCatchItem(() async =>
+                  await this.widget.forEachSnap(docChange.document));
+            })),
+            growable: true));
+        if (this.widget.orderBy != null) items.sort(this.widget.orderBy);
+        setState(() => _isLoading = false);
+      });
   }
 
   Future<List<T>> _realtimeDatabaseFetch({bool isNext = false}) async {
@@ -206,13 +227,20 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>>
       if (isNext) query = query.endAt(items.last.id);
       var snap = await query.once();
       var jsonObj = Map<String, dynamic>.from(snap.value);
-      data = await Future.wait<T>(jsonObj.entries.toList().map((each) async =>
-          await this
-              .widget
-              .forEachJson(each.key, Map<String, dynamic>.from(each.value))));
+      data = await Future.wait<T>(jsonObj.entries.toList().map((each) async {
+        try {
+          return await this
+              ?.widget
+              ?.forEachJson(each.key, Map<String, dynamic>.from(each.value));
+        } catch (err) {
+          _printErr(err: err, isItem: true);
+          return null;
+        }
+      }));
     } catch (err) {
       if (isNext) _refreshController?.loadNoData();
-      if (this.widget?.onFetchCatch != null) this.widget?.onFetchCatch(err);
+      if (this.widget.onFetchCatch != null) this.widget.onFetchCatch(err);
+      _printErr(err: err, isItem: false);
     }
     return data;
   }
@@ -225,27 +253,47 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>>
         query = query.startAfterDocument(_lastSnap);
       var doc = await query.getDocuments();
       _lastSnap = doc.documents.last;
-      data = await Future.wait<T>(doc?.documents?.map(this.widget.forEachSnap));
+      data = await Future.wait<T>(doc?.documents?.map((snap) {
+        try {
+          return this.widget.forEachSnap(snap);
+        } catch (err) {
+          _printErr(err: err, isItem: true);
+          return null;
+        }
+      }));
     } catch (err) {
       if (isNext) _refreshController?.loadNoData();
-      if (this.widget?.onFetchCatch != null) this.widget?.onFetchCatch(err);
+      if (this.widget.onFetchCatch != null) this.widget.onFetchCatch(err);
+      _printErr(err: err, isItem: false);
     }
     return data;
   }
 
+  _printErr({err, bool isItem}) {
+    if (err == null || isItem == null) return;
+    var message = isItem ? 'item' : 'list';
+    Result.hasError(
+        clientMessage: 'Could not fetch $message.',
+        errorType: ErrorTypes.server,
+        devMessage: Log.asString(
+            this, 'Could not get $message. Returning empty. Err -> $err'));
+  }
+
   @override
   void initState() {
+    super.initState();
     _refreshController = RefreshController();
     this.widget.padding ?? EdgeInsets.all(0);
-    super.initState();
+    if (this.widget.refresher != null) this.widget.refresher(_onRefresh);
     setState(() => _isLoading = true);
-    Future.delayed(Duration(milliseconds: this.widget.fetchDelay))
-        .then((_) => _onRefresh().then((_) {
-              if (this.widget._type == _Type.cloudFirestore)
-                _cloudFirestoreListen();
-              if (this.widget._type == _Type.realtimeDatabase)
-                _realtimeDatabaseListen();
-            }));
+    Future.microtask(() =>
+        Future.delayed(Duration(milliseconds: this.widget.fetchDelay))
+            .then((_) => _onRefresh().then((_) {
+                  if (this.widget._type == _Type.cloudFirestore)
+                    _cloudFirestoreListen();
+                  if (this.widget._type == _Type.realtimeDatabase)
+                    _realtimeDatabaseListen();
+                }).catchError((err) => this.widget.onFetchCatch(err))));
   }
 
   @override
@@ -254,20 +302,6 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>>
     _realtimeDatabaseSubscription?.cancel();
     _refreshController?.dispose();
     super.dispose();
-  }
-
-  Widget _listWidget() {
-    if (_isLoading) return this.widget.loaderWidget ?? Container();
-    if (this.widget.debugEmptyList) return this.widget.onEmptyList;
-    if (items.length == 0)
-      return this.widget.onEmptyList ?? Center(child: Text('Empty list'));
-    return ListView.builder(
-        physics: AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-        controller: this.widget.controller,
-        padding: this.widget.padding,
-        itemCount: items.length,
-        itemBuilder: (context, index) =>
-            this.widget.builder(List.castFrom<Model, T>(items), index));
   }
 
   @override
@@ -284,6 +318,22 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>>
             onLoading: () => _onLoading(),
             physics:
                 AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-            child: _listWidget()));
+
+            /// List View
+            child: _listView()));
+  }
+
+  _listView() {
+    if (_isLoading) return this.widget.loaderWidget ?? Container();
+    if (this.widget.debugEmptyList) return this.widget.onEmptyList;
+    if (items.length == 0)
+      return this.widget.onEmptyList ?? Center(child: Text('Empty list'));
+    return ListView.builder(
+        physics: AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+        controller: this.widget.controller,
+        padding: this.widget.padding,
+        itemCount: items.length,
+        itemBuilder: (context, index) =>
+            this.widget.builder(List.castFrom<Model, T>(items), index));
   }
 }

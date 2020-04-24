@@ -1,6 +1,6 @@
 name: fb_list_view
 description: A new Flutter package project.
-version: 0.0.1
+version: 0.0.2
 author: Vicky Mohammad
 homepage: https://github.com/vicmoh/fb_list_view
 
@@ -12,7 +12,7 @@ dependencies:
     sdk: flutter
 
   # Widget for pagination
-  pull_to_refresh: ^1.5.8 
+  pull_to_refresh: ^1.5.8
 
   # Firebase
   firebase_auth: ^0.15.3+1
@@ -28,8 +28,14 @@ dev_dependencies:
 
   provider_skeleton:
     git:
-      ref: v0.06
       url: git://github.com/vicmoh/provider_skeleton.git
+      ref: v0.06
+
+
+  dart_util:
+    git:
+      url: git://github.com/vicmoh/dart_util.git
+      ref: v0.06
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

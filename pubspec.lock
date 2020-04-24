@@ -50,6 +50,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.14.11"
+  colorize:
+    dependency: transitive
+    description:
+      name: colorize
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "2.0.0"
   convert:
     dependency: transitive
     description:
@@ -64,6 +71,15 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.1.3"
+  dart_util:
+    dependency: "direct dev"
+    description:
+      path: "."
+      ref: "v0.06"
+      resolved-ref: "1ac93bd3cf1281a7a253196da6d26dbe8779d7b4"
+      url: "git://github.com/vicmoh/dart_util.git"
+    source: git
+    version: "0.0.1"
   firebase:
     dependency: transitive
     description:
