@@ -37,7 +37,7 @@ packages:
     source: hosted
     version: "1.1.2"
   cloud_firestore:
-    dependency: "direct main"
+    dependency: "direct dev"
     description:
       name: cloud_firestore
       url: "https://pub.dartlang.org"
@@ -88,7 +88,7 @@ packages:
     source: hosted
     version: "7.3.0"
   firebase_auth:
-    dependency: "direct main"
+    dependency: "direct dev"
     description:
       name: firebase_auth
       url: "https://pub.dartlang.org"
@@ -109,7 +109,7 @@ packages:
     source: hosted
     version: "0.1.2"
   firebase_core:
-    dependency: "direct main"
+    dependency: "direct dev"
     description:
       name: firebase_core
       url: "https://pub.dartlang.org"
@@ -130,21 +130,21 @@ packages:
     source: hosted
     version: "0.1.1+2"
   firebase_database:
-    dependency: "direct main"
+    dependency: "direct dev"
     description:
       name: firebase_database
       url: "https://pub.dartlang.org"
     source: hosted
     version: "3.1.1"
   firebase_messaging:
-    dependency: "direct main"
+    dependency: "direct dev"
     description:
       name: firebase_messaging
       url: "https://pub.dartlang.org"
     source: hosted
     version: "6.0.9"
   firebase_storage:
-    dependency: "direct main"
+    dependency: "direct dev"
     description:
       name: firebase_storage
       url: "https://pub.dartlang.org"
@@ -273,7 +273,7 @@ packages:
     source: git
     version: "0.0.1"
   pull_to_refresh:
-    dependency: "direct main"
+    dependency: "direct dev"
     description:
       name: pull_to_refresh
       url: "https://pub.dartlang.org"

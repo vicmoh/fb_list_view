@@ -7,8 +7,8 @@ paginate and manage the list for you.
 
 In `pubspec.yaml` import the dependency.
 This widget is dependent on `provider_skeleton`
-and `dart_util`:
-- https://github.com/vicmoh/provider_skeleton
+and `dart_util`. Copy paste the below:
+
 
 ```
 dependencies:
@@ -33,6 +33,17 @@ dependencies:
     git:
       url: git://github.com/vicmoh/dart_util.git
       ref: v0.06 # this version or higher.
+
+  # Widget for pagination.
+  pull_to_refresh: ^1.5.8
+
+  # Firebase
+  firebase_auth: ^0.15.3+1
+  firebase_database: ^3.1.1
+  firebase_core: ^0.4.3+3
+  firebase_messaging: ^6.0.9
+  cloud_firestore: ^0.13.0+1
+  firebase_storage: ^3.1.1
 ```
 
 
