@@ -187,56 +187,41 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>>
     _refreshController?.loadComplete();
   }
 
-  _onCatchItem(Function() callbackToBeCatch) {
-    assert(callbackToBeCatch != null);
-    try {
-      return callbackToBeCatch();
-    } catch (err) {
-      _printErr(err, isItem: true);
-      return null;
-    }
-  }
-
   Future<void> _realtimeDatabaseListen() async {
-    if (items.length != 0 && items?.first?.id != null)
-      _realtimeDatabaseSubscription = this
-          .widget
-          ?.dbReference
-          ?.limitToLast(1)
-          ?.endAt(items?.first?.id)
-          ?.onChildAdded
-          ?.listen((event) async {
-        try {
-          addItems([
-            await _onCatchItem(() async => await this.widget.forEachJson(
-                event?.snapshot?.key,
-                Map<String, dynamic>.from(event?.snapshot?.value))),
-          ]);
-        } catch (err) {
-          _printErr(err, isItem: true);
-        }
-        setState(() => _isLoading = false);
-      });
+    _realtimeDatabaseSubscription = this
+        .widget
+        ?.dbReference
+        ?.limitToLast(1)
+        ?.onChildAdded
+        ?.listen((event) async {
+      try {
+        addItems([
+          await this.widget.forEachJson(event?.snapshot?.key,
+              Map<String, dynamic>.from(event?.snapshot?.value)),
+        ]);
+      } catch (err) {
+        _printErr(err, isItem: true);
+      }
+      setState(() => _isLoading = false);
+    });
   }
 
   Future<void> _cloudFirestoreListen() async {
-    if (items.length != 0)
-      _cloudFirestoreSubscription =
-          this.widget?.fsQuery?.snapshots()?.listen((data) async {
-        addItems(List<T>.from(
-            await Future.wait<T>(data.documentChanges.map((docChange) async {
-              try {
-                return await _onCatchItem(() async =>
-                    await this.widget.forEachSnap(docChange.document));
-              } catch (err) {
-                _printErr(err, isItem: true);
-                return null;
-              }
-            })),
-            growable: true));
-        if (this.widget.orderBy != null) items.sort(this.widget.orderBy);
-        setState(() => _isLoading = false);
-      });
+    _cloudFirestoreSubscription =
+        this.widget?.fsQuery?.snapshots()?.listen((data) async {
+      addItems(List<T>.from(
+          await Future.wait<T>(data.documentChanges.map((docChange) async {
+            try {
+              return await this.widget.forEachSnap(docChange.document);
+            } catch (err) {
+              _printErr(err, isItem: true);
+              return null;
+            }
+          })),
+          growable: true));
+      if (this.widget.orderBy != null) items.sort(this.widget.orderBy);
+      setState(() => _isLoading = false);
+    });
   }
 
   Future<List<T>> _realtimeDatabaseFetch({bool isNext = false}) async {
