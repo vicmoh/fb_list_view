@@ -6,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart' as _fs;
 import 'package:firebase_database/firebase_database.dart' as _db;
 import 'package:dart_util/dart_util.dart';
 import 'package:provider_skeleton/provider_skeleton.dart';
+import 'package:pull_to_refresh/src/indicator/material_indicator.dart';
 
 /// The list view type that can be used.
 enum _Type { realtimeDatabase, cloudFirestore }
@@ -89,6 +90,11 @@ class FBListView<T extends Model> extends StatefulWidget {
   /// snapshot into an object.
   final Future<T> Function(String id, Map<String, dynamic> json) forEachJson;
 
+  /// Create with sliver list. Callback the
+  /// the sliver widget list version.
+  /// This callback must return list of sliver widgets.
+  final List<Widget> Function(Widget sliverList) slivers;
+
   /* ------------------------------- Constructor ------------------------------ */
 
   /// List view for Firestore.
@@ -108,17 +114,21 @@ class FBListView<T extends Model> extends StatefulWidget {
     this.refresher,
     this.headerWidget,
     this.footerWidget,
+    this.slivers,
   })  : _type = _Type.cloudFirestore,
+        assert(!(builder == null)),
+        assert(fsQuery != null),
+        assert(forEachSnap != null),
         this.dbQuery = null,
         this.forEachJson = null,
         this.dbReference = null;
 
   /// List view for Firebase DB
   FBListView.realtimeDatabase({
-    this.dbQuery,
-    this.dbReference,
     @required this.builder,
     @required this.forEachJson,
+    this.dbQuery,
+    this.dbReference,
     this.onEmptyList,
     this.orderBy,
     this.loaderWidget,
@@ -131,10 +141,21 @@ class FBListView<T extends Model> extends StatefulWidget {
     this.refresher,
     this.headerWidget,
     this.footerWidget,
+    this.slivers,
   })  : assert(!(dbQuery == null && dbReference == null)),
+        assert(!(builder == null)),
+        assert(forEachJson != null),
         _type = _Type.realtimeDatabase,
         this.fsQuery = null,
         this.forEachSnap = null;
+
+  /// Water drop material header with
+  /// the sliver.
+  static Widget waterDropMaterialHeader({
+    Color color = Colors.black,
+    Color backgroundColor = Colors.white,
+  }) =>
+      WaterDropMaterialHeader(backgroundColor: backgroundColor, color: color);
 
   /// The header of when refreshing a page.
   static Widget waterDropHeader({
@@ -325,20 +346,39 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>>
                 AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
 
             /// List View
-            child: _listView()));
+            child: _listViewContent()));
   }
 
-  _listView() {
+  _sliver(List<Widget> child) {
+    return CustomScrollView(
+        controller: this.widget.controller,
+        physics: AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+        slivers: child);
+  }
+
+  _sliverList() => SliverPadding(
+      padding: this.widget.padding,
+      sliver: SliverList(
+          delegate: SliverChildBuilderDelegate(
+              (context, index) =>
+                  this.widget.builder(List.castFrom<Model, T>(items), index),
+              childCount: items.length)));
+
+  _listViewBuilder() => ListView.builder(
+      physics: AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+      controller: this.widget.controller,
+      padding: this.widget.padding,
+      itemCount: items.length,
+      itemBuilder: (context, index) =>
+          this.widget.builder(List.castFrom<Model, T>(items), index));
+
+  _listViewContent() {
     if (_isLoading) return this.widget.loaderWidget ?? Container();
     if (this.widget.debugEmptyList) return this.widget.onEmptyList;
     if (items.length == 0)
       return this.widget.onEmptyList ?? Center(child: Text('Empty list'));
-    return ListView.builder(
-        physics: AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-        controller: this.widget.controller,
-        padding: this.widget.padding,
-        itemCount: items.length,
-        itemBuilder: (context, index) =>
-            this.widget.builder(List.castFrom<Model, T>(items), index));
+    if (this.widget.slivers != null)
+      return _sliver(this.widget.slivers(_sliverList()));
+    return _listViewBuilder();
   }
 }
