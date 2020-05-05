@@ -6,7 +6,6 @@ import 'package:cloud_firestore/cloud_firestore.dart' as _fs;
 import 'package:firebase_database/firebase_database.dart' as _db;
 import 'package:dart_util/dart_util.dart';
 import 'package:provider_skeleton/provider_skeleton.dart';
-import 'package:pull_to_refresh/src/indicator/material_indicator.dart';
 
 /// The list view type that can be used.
 enum _Type { realtimeDatabase, cloudFirestore }
@@ -32,6 +31,12 @@ class FBListView<T extends Model> extends StatefulWidget {
 
   /// Loader.
   final Widget loaderWidget;
+
+  /// Determine whether to always show
+  /// [loaderWidget] on refresh.
+  /// If false, it will only show
+  /// the loader at the start.
+  final bool alwaysShowLoader;
 
   /// The list view scroll controller.
   final ScrollController controller;
@@ -115,6 +120,7 @@ class FBListView<T extends Model> extends StatefulWidget {
     this.headerWidget,
     this.footerWidget,
     this.slivers,
+    this.alwaysShowLoader = false,
   })  : _type = _Type.cloudFirestore,
         assert(!(builder == null)),
         assert(fsQuery != null),
@@ -142,6 +148,7 @@ class FBListView<T extends Model> extends StatefulWidget {
     this.headerWidget,
     this.footerWidget,
     this.slivers,
+    this.alwaysShowLoader = false,
   })  : assert(!(dbQuery == null && dbReference == null)),
         assert(!(builder == null)),
         assert(forEachJson != null),
@@ -186,6 +193,7 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>>
   StreamSubscription _cloudFirestoreSubscription;
   StreamSubscription _realtimeDatabaseSubscription;
   bool _isLoading = false;
+  bool _isFirstTimeLoading = true;
 
   Future<void> _onRefresh() async {
     setState(() => _isLoading = true);
@@ -194,7 +202,10 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>>
     else if (this.widget._type == _Type.realtimeDatabase)
       replaceItems(await _realtimeDatabaseFetch());
     if (this.widget.orderBy != null) items.sort(this.widget.orderBy);
-    setState(() => _isLoading = false);
+    setState(() {
+      _isLoading = false;
+      _isFirstTimeLoading = false;
+    });
     _refreshController?.refreshToIdle();
   }
 
@@ -204,7 +215,10 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>>
     else if (this.widget._type == _Type.realtimeDatabase)
       addItems(await _realtimeDatabaseFetch(isNext: true));
     if (this.widget.orderBy != null) items.sort(this.widget.orderBy);
-    setState(() => _isLoading = false);
+    setState(() {
+      _isLoading = false;
+      _isFirstTimeLoading = false;
+    });
     _refreshController?.loadComplete();
   }
 
@@ -256,8 +270,8 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>>
       data = await Future.wait<T>(jsonObj.entries.toList().map((each) async {
         try {
           return await this
-              ?.widget
-              ?.forEachJson(each.key, Map<String, dynamic>.from(each.value));
+              .widget
+              .forEachJson(each.key, Map<String, dynamic>.from(each.value));
         } catch (err) {
           _printErr(err, isItem: true);
           return null;
@@ -308,6 +322,7 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>>
   @override
   void initState() {
     super.initState();
+    _isFirstTimeLoading = true;
     _refreshController = RefreshController();
     this.widget.padding ?? EdgeInsets.all(0);
     if (this.widget.refresher != null) this.widget.refresher(_onRefresh);
@@ -373,7 +388,10 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>>
           this.widget.builder(List.castFrom<Model, T>(items), index));
 
   _listViewContent() {
-    if (_isLoading) return this.widget.loaderWidget ?? Container();
+    if ((this.widget.loaderWidget != null &&
+            this.widget.alwaysShowLoader &&
+            _isLoading) ||
+        _isFirstTimeLoading) return this.widget.loaderWidget ?? Container();
     if (this.widget.debugEmptyList) return this.widget.onEmptyList;
     if (items.length == 0)
       return this.widget.onEmptyList ?? Center(child: Text('Empty list'));
