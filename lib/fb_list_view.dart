@@ -13,8 +13,7 @@ enum _Type { realtimeDatabase, cloudFirestore }
 /// Schmick list view containing the smart
 /// refresher where you can refresh the page.
 class FBListView<T extends Model> extends StatefulWidget {
-  /// The list view type.
-  final _Type _type;
+/* ----------------------------- Widget setting ----------------------------- */
 
   /// Widget of when the list is empty.
   final Widget onEmptyList;
@@ -41,19 +40,12 @@ class FBListView<T extends Model> extends StatefulWidget {
   /// The list view scroll controller.
   final ScrollController controller;
 
-  /// Compare function to order the list.
-  final int Function(T, T) orderBy;
-
   /// Fetch delay on initialize state in milliseconds.
   final int fetchDelay;
 
   /// If this set to true, it will show the empty list.
   /// This is meant for debugging purposes.
   final bool debugEmptyList;
-
-  /// On error on fetching, all catches
-  /// when fetching will be on this callback.
-  final Function(dynamic) onFetchCatch;
 
   /// A call back that will the function to
   /// refresh the page.
@@ -64,6 +56,23 @@ class FBListView<T extends Model> extends StatefulWidget {
 
   /// The footer widget when on paginate load.
   final Widget footerWidget;
+
+  /// Create with sliver list. Callback the
+  /// the sliver widget list version.
+  /// This callback must return list of sliver widgets.
+  final List<Widget> Function(Widget sliverList) slivers;
+
+  /* ---------------------------------- Logic --------------------------------- */
+
+  /// The list view type.
+  final _Type _type;
+
+  /// Compare function to order the list.
+  final int Function(T, T) orderBy;
+
+  /// On error on fetching, all catches
+  /// when fetching will be on this callback.
+  final Function(dynamic) onFetchCatch;
 
   /* -------------------------------- Firestore ------------------------------- */
 
@@ -95,11 +104,6 @@ class FBListView<T extends Model> extends StatefulWidget {
   /// snapshot into an object.
   final Future<T> Function(String id, Map<String, dynamic> json) forEachJson;
 
-  /// Create with sliver list. Callback the
-  /// the sliver widget list version.
-  /// This callback must return list of sliver widgets.
-  final List<Widget> Function(Widget sliverList) slivers;
-
   /* ------------------------------- Constructor ------------------------------ */
 
   /// List view for Firestore.
@@ -107,15 +111,15 @@ class FBListView<T extends Model> extends StatefulWidget {
     @required this.fsQuery,
     @required this.builder,
     @required this.forEachSnap,
-    this.onEmptyList,
+    this.onFetchCatch,
     this.orderBy,
+    this.onEmptyList,
     this.loaderWidget,
     this.padding,
     this.controller,
     this.isReverse = false,
     this.fetchDelay = 0,
     this.debugEmptyList = false,
-    this.onFetchCatch,
     this.refresher,
     this.headerWidget,
     this.footerWidget,
