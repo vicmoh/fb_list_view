@@ -29,7 +29,7 @@ dev_dependencies:
   provider_skeleton:
     git:
       url: git://github.com/vicmoh/provider_skeleton.git
-      ref: v0.06
+      ref: v0.0.11
 
   dart_util:
     git:
