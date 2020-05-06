@@ -16,7 +16,7 @@ enum FBTypes {
 }
 
 /// View logic for managing list Firebase fetches and pagination.
-abstract class FBListViewLogic<T extends Model> extends ViewLogic
+class FBListViewLogic<T extends Model> extends ViewLogic
     with UniquifyListModel {
   /* ---------------------------------- Logic --------------------------------- */
 
@@ -127,7 +127,11 @@ abstract class FBListViewLogic<T extends Model> extends ViewLogic
   /*                              Private variable                              */
   /* -------------------------------------------------------------------------- */
 
+  /// The refresh controller for smart refresher.
+  get refreshController => _refreshController;
   RefreshController _refreshController;
+
+  // Keep track of snaps and subs
   _fs.DocumentSnapshot _lastSnap;
   StreamSubscription _cloudFirestoreSubscription;
   StreamSubscription _realtimeDatabaseSubscription;
