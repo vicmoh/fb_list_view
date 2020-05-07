@@ -350,23 +350,21 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>>
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-        child: SmartRefresher(
-            reverse: this.widget.isReverse,
-            controller: _refreshController,
-            enablePullDown: this.widget.isReverse ? false : true,
-            enablePullUp: true,
-            header: this.widget.headerWidget ?? FBListView.waterDropHeader(),
-            footer: this.widget.footerWidget ?? FBListView.emptyFooter(),
-            onRefresh: () => _onRefresh(),
-            onLoading: () => _onLoading(),
-            physics:
-                AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+  Widget build(BuildContext context) => _smartRefresher();
 
-            /// List View
-            child: _listViewContent()));
-  }
+  _smartRefresher() => Container(
+      child: SmartRefresher(
+          reverse: this.widget.isReverse,
+          controller: _refreshController,
+          enablePullDown: this.widget.isReverse ? false : true,
+          enablePullUp: true,
+          header: this.widget.headerWidget ?? FBListView.waterDropHeader(),
+          footer: this.widget.footerWidget ?? FBListView.emptyFooter(),
+          onRefresh: () => _onRefresh(),
+          onLoading: () => _onLoading(),
+          physics:
+              AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+          child: _listViewContent()));
 
   _sliver(List<Widget> child) {
     return CustomScrollView(
