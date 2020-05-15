@@ -4,8 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:cloud_firestore/cloud_firestore.dart' as _fs;
 import 'package:firebase_database/firebase_database.dart' as _db;
-import 'package:dart_util/dart_util.dart';
 import 'package:provider_skeleton/provider_skeleton.dart';
+
+import './fb_list_view_logic.dart';
 
 /// The list view type that can be used.
 enum _Type { realtimeDatabase, cloudFirestore }
@@ -190,162 +191,46 @@ class FBListView<T extends Model> extends StatefulWidget {
   _FBListViewState<T> createState() => _FBListViewState<T>();
 }
 
-class _FBListViewState<T extends Model> extends State<FBListView<T>>
-    with UniquifyListModel {
-  RefreshController _refreshController;
-  _fs.DocumentSnapshot _lastSnap;
+class _FBListViewState<T extends Model> extends State<FBListView<T>> {
   StreamSubscription _cloudFirestoreSubscription;
   StreamSubscription _realtimeDatabaseSubscription;
-  bool _isLoading = false;
+  FBListViewLogic _logic;
   bool _isFirstTimeLoading = true;
-
-  Future<void> _onRefresh() async {
-    setState(() => _isLoading = true);
-    if (this.widget._type == _Type.cloudFirestore)
-      replaceItems(await _firestoreFetch());
-    else if (this.widget._type == _Type.realtimeDatabase)
-      replaceItems(await _realtimeDatabaseFetch());
-    if (this.widget.orderBy != null) items.sort(this.widget.orderBy);
-    setState(() {
-      _isLoading = false;
-      _isFirstTimeLoading = false;
-    });
-    _refreshController?.refreshToIdle();
-  }
-
-  Future<void> _onLoading() async {
-    if (this.widget._type == _Type.cloudFirestore)
-      addItems(await _firestoreFetch(isNext: true));
-    else if (this.widget._type == _Type.realtimeDatabase)
-      addItems(await _realtimeDatabaseFetch(isNext: true));
-    if (this.widget.orderBy != null) items.sort(this.widget.orderBy);
-    setState(() {
-      _isLoading = false;
-      _isFirstTimeLoading = false;
-    });
-    _refreshController?.loadComplete();
-  }
-
-  Future<void> _realtimeDatabaseListen() async {
-    _realtimeDatabaseSubscription = this
-        .widget
-        ?.dbReference
-        ?.limitToLast(1)
-        ?.onChildAdded
-        ?.listen((event) async {
-      try {
-        addItems([
-          await this.widget.forEachJson(event?.snapshot?.key,
-              Map<String, dynamic>.from(event?.snapshot?.value)),
-        ]);
-      } catch (err) {
-        _printErr(err, isItem: true);
-      }
-      setState(() => _isLoading = false);
-    });
-  }
-
-  Future<void> _cloudFirestoreListen() async {
-    _cloudFirestoreSubscription =
-        this.widget?.fsQuery?.snapshots()?.listen((data) async {
-      addItems(List<T>.from(
-          await Future.wait<T>(data.documentChanges.map((docChange) async {
-            try {
-              return await this.widget.forEachSnap(docChange.document);
-            } catch (err) {
-              _printErr(err, isItem: true);
-              return null;
-            }
-          })),
-          growable: true));
-      if (this.widget.orderBy != null) items.sort(this.widget.orderBy);
-      setState(() => _isLoading = false);
-    });
-  }
-
-  Future<List<T>> _realtimeDatabaseFetch({bool isNext = false}) async {
-    List<T> data = [];
-    try {
-      var query = this.widget.dbQuery ??
-          this.widget.dbReference.orderByKey().limitToLast(30);
-      if (isNext) query = query.endAt(items.last.id);
-      var snap = await query.once();
-      var jsonObj = Map<String, dynamic>.from(snap.value);
-      data = await Future.wait<T>(jsonObj.entries.toList().map((each) async {
-        try {
-          return await this
-              .widget
-              .forEachJson(each.key, Map<String, dynamic>.from(each.value));
-        } catch (err) {
-          _printErr(err, isItem: true);
-          return null;
-        }
-      }));
-    } catch (err) {
-      if (isNext) _refreshController?.loadNoData();
-      if (this.widget.onFetchCatch != null) this.widget.onFetchCatch(err);
-      _printErr(err);
-    }
-    return data;
-  }
-
-  Future<List<T>> _firestoreFetch({bool isNext = false}) async {
-    List<T> data = [];
-    try {
-      var query = this.widget.fsQuery;
-      if (isNext && _lastSnap != null)
-        query = query.startAfterDocument(_lastSnap);
-      var doc = await query.getDocuments();
-      _lastSnap = doc.documents.last;
-      data = await Future.wait<T>(doc?.documents?.map((snap) {
-        try {
-          return this.widget.forEachSnap(snap);
-        } catch (err) {
-          _printErr(err, isItem: true);
-          return null;
-        }
-      }));
-    } catch (err) {
-      if (isNext) _refreshController?.loadNoData();
-      if (this.widget.onFetchCatch != null) this.widget.onFetchCatch(err);
-      _printErr(err);
-    }
-    return data;
-  }
-
-  _printErr(err, {bool isItem = false}) {
-    if (err == null) return;
-    var message = isItem ? 'item' : 'list';
-    Result.hasError(
-        clientMessage: 'Could not fetch $message.',
-        errorType: ErrorTypes.server,
-        devMessage: Log.asString(
-            this, 'Could not get $message. Returning empty. Err -> $err'));
-  }
 
   @override
   void initState() {
     super.initState();
-    _isFirstTimeLoading = true;
-    _refreshController = RefreshController();
     this.widget.padding ?? EdgeInsets.all(0);
-    if (this.widget.refresher != null) this.widget.refresher(_onRefresh);
-    setState(() => _isLoading = true);
-    Future.microtask(() =>
-        Future.delayed(Duration(milliseconds: this.widget.fetchDelay))
-            .then((_) => _onRefresh().then((_) {
-                  if (this.widget._type == _Type.cloudFirestore)
-                    _cloudFirestoreListen();
-                  if (this.widget._type == _Type.realtimeDatabase)
-                    _realtimeDatabaseListen();
-                }).catchError((err) => this.widget.onFetchCatch(err))));
+
+    /// Determine which logic it will be using.
+    _isFirstTimeLoading = true;
+    if (this.widget._type == _Type.cloudFirestore)
+      _logic = FBListViewLogic<T>.cloudFirestore(
+          onFirstFetchStatus: (status) =>
+              setState(() => _isFirstTimeLoading = !status),
+          fsQuery: this.widget.fsQuery,
+          forEachSnap: this.widget.forEachSnap,
+          fetchDelay: this.widget.fetchDelay,
+          onFetchCatch: this.widget.onFetchCatch,
+          orderBy: this.widget.orderBy,
+          refresher: this.widget.refresher);
+    else if (this.widget._type == _Type.realtimeDatabase)
+      _logic = FBListViewLogic<T>.realtimeDatabase(
+          onFirstFetchStatus: (status) =>
+              setState(() => _isFirstTimeLoading = !status),
+          dbReference: this.widget.dbReference,
+          dbQuery: this.widget.dbQuery,
+          forEachJson: this.widget.forEachJson,
+          fetchDelay: this.widget.fetchDelay,
+          onFetchCatch: this.widget.onFetchCatch,
+          orderBy: this.widget.orderBy,
+          refresher: this.widget.refresher);
   }
 
   @override
   void dispose() {
     _cloudFirestoreSubscription?.cancel();
     _realtimeDatabaseSubscription?.cancel();
-    _refreshController?.dispose();
     super.dispose();
   }
 
@@ -353,18 +238,24 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>>
   Widget build(BuildContext context) => _smartRefresher();
 
   _smartRefresher() => Container(
-      child: SmartRefresher(
-          reverse: this.widget.isReverse,
-          controller: _refreshController,
-          enablePullDown: this.widget.isReverse ? false : true,
-          enablePullUp: true,
-          header: this.widget.headerWidget ?? FBListView.waterDropHeader(),
-          footer: this.widget.footerWidget ?? FBListView.emptyFooter(),
-          onRefresh: () => _onRefresh(),
-          onLoading: () => _onLoading(),
-          physics:
-              AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-          child: _listViewContent()));
+      child: WatchState<FBListViewLogic>(
+          logic: _logic,
+          builder: (context, model) {
+            return SmartRefresher(
+                reverse: this.widget.isReverse,
+                controller: model.refreshController,
+                enablePullDown: this.widget.isReverse ? false : true,
+                enablePullUp: true,
+                header:
+                    this.widget.headerWidget ?? FBListView.waterDropHeader(),
+                footer: this.widget.footerWidget ?? FBListView.emptyFooter(),
+                onRefresh: () => model.onRefresh(),
+                onLoading: () => model.onLoading(),
+                physics: AlwaysScrollableScrollPhysics(
+                    parent: BouncingScrollPhysics()),
+                child:
+                    _listViewContent(model.items, isLoading: model.isLoading));
+          }));
 
   _sliver(List<Widget> child) {
     return CustomScrollView(
@@ -373,7 +264,7 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>>
         slivers: child);
   }
 
-  _sliverList() => SliverPadding(
+  _sliverList(List<Model> items) => SliverPadding(
       padding: this.widget.padding,
       sliver: SliverList(
           delegate: SliverChildBuilderDelegate(
@@ -381,7 +272,7 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>>
                   this.widget.builder(List.castFrom<Model, T>(items), index),
               childCount: items.length)));
 
-  _listViewBuilder() => ListView.builder(
+  _listViewBuilder(List<Model> items) => ListView.builder(
       physics: AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
       controller: this.widget.controller,
       padding: this.widget.padding,
@@ -389,16 +280,16 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>>
       itemBuilder: (context, index) =>
           this.widget.builder(List.castFrom<Model, T>(items), index));
 
-  _listViewContent() {
+  _listViewContent(List<Model> items, {@required bool isLoading}) {
     if ((this.widget.loaderWidget != null &&
             this.widget.alwaysShowLoader &&
-            _isLoading) ||
+            isLoading) ||
         _isFirstTimeLoading) return this.widget.loaderWidget ?? Container();
     if (this.widget.debugEmptyList) return this.widget.onEmptyList;
     if (items.length == 0)
       return this.widget.onEmptyList ?? Center(child: Text('Empty list'));
     if (this.widget.slivers != null)
-      return _sliver(this.widget.slivers(_sliverList()));
-    return _listViewBuilder();
+      return _sliver(this.widget.slivers(_sliverList(items)));
+    return _listViewBuilder(items);
   }
 }

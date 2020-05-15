@@ -30,6 +30,11 @@ class FBListViewLogic<T extends Model> extends ViewLogic
   /// when fetching will be on this callback.
   final Function(dynamic) onFetchCatch;
 
+  /// Function callback to determine if the logic
+  /// is currently fetching.
+  /// Callback false if fetching, and true if complete.
+  final Function(bool) onFirstFetchStatus;
+
   /// Fetch delay on initialize state in milliseconds.
   final int fetchDelay;
 
@@ -77,6 +82,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     this.orderBy,
     this.fetchDelay = 0,
     this.refresher,
+    this.onFirstFetchStatus,
   })  : _type = FBTypes.cloudFirestore,
         assert(fsQuery != null),
         assert(forEachSnap != null),
@@ -93,6 +99,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     this.onFetchCatch,
     this.fetchDelay = 0,
     this.refresher,
+    this.onFirstFetchStatus,
   })  : assert(!(dbQuery == null && dbReference == null)),
         assert(forEachJson != null),
         _type = FBTypes.realtimeDatabase,
@@ -104,14 +111,23 @@ class FBListViewLogic<T extends Model> extends ViewLogic
   @override
   void initState() {
     super.initState();
+    final status = (bool val) =>
+        this.onFirstFetchStatus == null ? null : this.onFirstFetchStatus(val);
+    status(false);
     _refreshController = RefreshController();
-    if (refresher != null) refresher(this.onRefresh);
+
+    /// Set status as loading.
     refresh(ViewState.asLoading);
     Future.microtask(() => Future.delayed(Duration(milliseconds: fetchDelay))
         .then((_) => this.onRefresh().then((_) {
-              if (_type == FBTypes.cloudFirestore) _cloudFirestoreListen();
-              if (_type == FBTypes.realtimeDatabase) _realtimeDatabaseListen();
+              if (_type == FBTypes.cloudFirestore)
+                _cloudFirestoreListen().then((value) => status(true));
+              if (_type == FBTypes.realtimeDatabase)
+                _realtimeDatabaseListen().then((value) => status(true));
             }).catchError((err) => onFetchCatch(err))));
+
+    /// Callback refresher
+    if (refresher != null) refresher(this.onRefresh);
   }
 
   @override
@@ -148,8 +164,8 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     else if (_type == FBTypes.realtimeDatabase)
       replaceItems(await _realtimeDatabaseFetch());
     if (orderBy != null) items.sort(orderBy);
-    refresh(ViewState.asComplete);
     _refreshController?.refreshToIdle();
+    refresh(ViewState.asComplete);
   }
 
   /// Load next pagination.
@@ -161,8 +177,8 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     else if (_type == FBTypes.realtimeDatabase)
       addItems(await _realtimeDatabaseFetch(isNext: true));
     if (orderBy != null) items.sort(orderBy);
-    refresh(ViewState.asComplete);
     _refreshController?.loadComplete();
+    refresh(ViewState.asComplete);
   }
 
   Future<void> _realtimeDatabaseListen() async {
@@ -176,6 +192,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
       } catch (err) {
         _printErr(err, isItem: true);
       }
+      if (orderBy != null) items.sort(orderBy);
       refresh(ViewState.asComplete);
     });
   }
