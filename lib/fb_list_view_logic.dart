@@ -132,7 +132,8 @@ class FBListViewLogic<T extends Model> extends ViewLogic
 
   @override
   void dispose() {
-    Log(this, 'FBListViewLogic.dispose(): Invoked.');
+    const debug = false;
+    if (debug) Log(this, 'FBListViewLogic.dispose(): Invoked.');
     _cloudFirestoreSubscription?.cancel();
     _realtimeDatabaseSubscription?.cancel();
     _refreshController?.dispose();
@@ -182,8 +183,13 @@ class FBListViewLogic<T extends Model> extends ViewLogic
   }
 
   Future<void> _realtimeDatabaseListen() async {
+    const debug = false;
+
+    /// On child updated
     _realtimeDatabaseSubscription =
         dbReference?.limitToLast(1)?.onChildAdded?.listen((event) async {
+      if (debug)
+        Log(this, 'Realtime listen on child added: ${event?.snapshot?.value}');
       try {
         addItems([
           await forEachJson(event?.snapshot?.key,
