@@ -237,7 +237,8 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
                 controller: model.refreshController,
                 enablePullDown: this.widget.isReverse ? false : true,
                 enablePullUp: true,
-                header: this.widget.headerWidget ?? FBListView.emptyFooter(),
+                header:
+                    this.widget.headerWidget ?? FBListView.waterDropHeader(),
                 footer: this.widget.footerWidget ?? FBListView.emptyFooter(),
                 onRefresh: () => model.onRefresh(),
                 onLoading: () => model.onLoading(),
