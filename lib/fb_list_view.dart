@@ -192,8 +192,6 @@ class FBListView<T extends Model> extends StatefulWidget {
 }
 
 class _FBListViewState<T extends Model> extends State<FBListView<T>> {
-  StreamSubscription _cloudFirestoreSubscription;
-  StreamSubscription _realtimeDatabaseSubscription;
   FBListViewLogic _logic;
   bool _isFirstTimeLoading = true;
 
@@ -228,13 +226,6 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
   }
 
   @override
-  void dispose() {
-    _cloudFirestoreSubscription?.cancel();
-    _realtimeDatabaseSubscription?.cancel();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) => _smartRefresher();
 
   _smartRefresher() => Container(
@@ -246,8 +237,7 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
                 controller: model.refreshController,
                 enablePullDown: this.widget.isReverse ? false : true,
                 enablePullUp: true,
-                header:
-                    this.widget.headerWidget ?? FBListView.waterDropHeader(),
+                header: this.widget.headerWidget ?? FBListView.emptyFooter(),
                 footer: this.widget.footerWidget ?? FBListView.emptyFooter(),
                 onRefresh: () => model.onRefresh(),
                 onLoading: () => model.onLoading(),
