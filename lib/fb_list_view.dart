@@ -181,13 +181,11 @@ class FBListView<T extends Model> extends StatefulWidget {
   /// The footer of when paginating to the next page.
   static Widget emptyFooter() => CustomFooter(builder: (context, status) {
         if (status == LoadStatus.loading)
-          return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 30),
-              child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    Container(child: CircularProgressIndicator())
-                  ]));
+          return Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Container(child: CircularProgressIndicator())
+              ]);
         return Container();
       });
 
