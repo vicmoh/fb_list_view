@@ -235,29 +235,24 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
   _smartRefresher() => Container(
       child: WatchState<FBListViewLogic>(
           logic: _logic,
-          builder: (context, model) {
-            return SmartRefresher(
-                reverse: this.widget.isReverse,
-                controller: model.refreshController,
-                enablePullDown: this.widget.isReverse ? false : true,
-                enablePullUp: true,
-                header:
-                    this.widget.headerWidget ?? FBListView.waterDropHeader(),
-                footer: this.widget.footerWidget ?? FBListView.emptyFooter(),
-                onRefresh: () => model.onRefresh(),
-                onLoading: () => model.onLoading(),
-                physics: AlwaysScrollableScrollPhysics(
-                    parent: BouncingScrollPhysics()),
-                child:
-                    _listViewContent(model.items, isLoading: model.isLoading));
-          }));
+          builder: (context, model) => SmartRefresher(
+              reverse: this.widget.isReverse,
+              controller: model.refreshController,
+              enablePullDown: this.widget.isReverse ? false : true,
+              enablePullUp: true,
+              header: this.widget.headerWidget ?? FBListView.waterDropHeader(),
+              footer: this.widget.footerWidget ?? FBListView.emptyFooter(),
+              onRefresh: () => model.onRefresh(),
+              onLoading: () => model.onLoading(),
+              physics: AlwaysScrollableScrollPhysics(
+                  parent: BouncingScrollPhysics()),
+              child:
+                  _listViewContent(model.items, isLoading: model.isLoading))));
 
-  _sliver(List<Widget> child) {
-    return CustomScrollView(
-        controller: this.widget.controller,
-        physics: AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-        slivers: child);
-  }
+  _sliver(List<Widget> child) => CustomScrollView(
+      controller: this.widget.controller,
+      physics: AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+      slivers: child);
 
   _sliverList(List<Model> items) => SliverPadding(
       padding: this.widget.padding,
