@@ -15,8 +15,14 @@ enum _Type { realtimeDatabase, cloudFirestore }
 /// refresher where you can refresh the page.
 class FBListView<T extends Model> extends StatefulWidget {
 /* ----------------------------- Widget setting ----------------------------- */
+  /// Widget of when the list is empty.
+  /// This widget is placed outside the widget
+  /// in  comparison to [onEmptyList].
+  final Widget onEmptyWidget;
 
   /// Widget of when the list is empty.
+  /// This widget will be placed inside the list view
+  /// in comparison to [onEmptyWidget]
   final Widget onEmptyList;
 
   /// The widget builder of each tile in the list.
@@ -45,8 +51,14 @@ class FBListView<T extends Model> extends StatefulWidget {
   final int fetchDelay;
 
   /// If this set to true, it will show the empty list.
-  /// This is meant for debugging purposes.
+  /// This is meant for debugging purposes
+  /// This is for debugging for [onEmptyList].
   final bool debugEmptyList;
+
+  /// If this set to true, it will show the empty list.
+  /// This is meant for debugging purposes.
+  /// This is for debugging for [onEmptyWidget]
+  final bool debugEmptyWidget;
 
   /// A call back that will the function to
   /// refresh the page.
@@ -114,12 +126,14 @@ class FBListView<T extends Model> extends StatefulWidget {
     @required this.forEachSnap,
     this.onFetchCatch,
     this.orderBy,
+    this.onEmptyWidget,
     this.onEmptyList,
     this.loaderWidget,
     this.padding,
     this.controller,
     this.isReverse = false,
     this.fetchDelay = 0,
+    this.debugEmptyWidget = false,
     this.debugEmptyList = false,
     this.refresher,
     this.headerWidget,
@@ -140,6 +154,7 @@ class FBListView<T extends Model> extends StatefulWidget {
     @required this.forEachJson,
     this.dbQuery,
     this.dbReference,
+    this.onEmptyWidget,
     this.onEmptyList,
     this.orderBy,
     this.loaderWidget,
@@ -147,6 +162,7 @@ class FBListView<T extends Model> extends StatefulWidget {
     this.controller,
     this.isReverse = false,
     this.fetchDelay = 0,
+    this.debugEmptyWidget = false,
     this.debugEmptyList = false,
     this.onFetchCatch,
     this.refresher,
@@ -233,19 +249,24 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
   _smartRefresher() => Container(
       child: WatchState<FBListViewLogic>(
           logic: _logic,
-          builder: (context, model) => SmartRefresher(
-              reverse: this.widget.isReverse,
-              controller: model.refreshController,
-              enablePullDown: this.widget.isReverse ? false : true,
-              enablePullUp: true,
-              header: this.widget.headerWidget ?? FBListView.waterDropHeader(),
-              footer: this.widget.footerWidget ?? FBListView.emptyFooter(),
-              onRefresh: () => model.onRefresh(),
-              onLoading: () => model.onLoading(),
-              physics: AlwaysScrollableScrollPhysics(
-                  parent: BouncingScrollPhysics()),
-              child:
-                  _listViewContent(model.items, isLoading: model.isLoading))));
+          builder: (context, model) => (this.widget.onEmptyWidget != null &&
+                      model.items.isEmpty) ||
+                  this.widget.debugEmptyWidget
+              ? this.widget.onEmptyWidget
+              : SmartRefresher(
+                  reverse: this.widget.isReverse,
+                  controller: model.refreshController,
+                  enablePullDown: this.widget.isReverse ? false : true,
+                  enablePullUp: true,
+                  header:
+                      this.widget.headerWidget ?? FBListView.waterDropHeader(),
+                  footer: this.widget.footerWidget ?? FBListView.emptyFooter(),
+                  onRefresh: () => model.onRefresh(),
+                  onLoading: () => model.onLoading(),
+                  physics: AlwaysScrollableScrollPhysics(
+                      parent: BouncingScrollPhysics()),
+                  child: _listViewContent(model.items,
+                      isLoading: model.isLoading))));
 
   _sliver(List<Widget> child) => CustomScrollView(
       controller: this.widget.controller,
@@ -274,8 +295,7 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
             isLoading) ||
         _isFirstTimeLoading) return this.widget.loaderWidget ?? Container();
     if (this.widget.debugEmptyList) return this.widget.onEmptyList;
-    if (items.length == 0)
-      return this.widget.onEmptyList ?? Center(child: Text('Empty list'));
+    if (items.length == 0) return this.widget.onEmptyList ?? Container();
     if (this.widget.slivers != null)
       return _sliver(this.widget.slivers(_sliverList(items)));
     return _listViewBuilder(items);
