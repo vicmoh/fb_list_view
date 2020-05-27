@@ -246,27 +246,29 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
   @override
   Widget build(BuildContext context) => _smartRefresher();
 
+  _listView(FBListViewLogic model) {
+    var isEmptyWidget =
+        this.widget.onEmptyWidget != null && model.items.isEmpty;
+    if (isEmptyWidget && model.isLoading)
+      return this.widget.loaderWidget ?? Container();
+    if (isEmptyWidget || this.widget.debugEmptyWidget)
+      return this.widget.onEmptyWidget ?? Container();
+    return SmartRefresher(
+        reverse: this.widget.isReverse,
+        controller: model.refreshController,
+        enablePullDown: this.widget.isReverse ? false : true,
+        enablePullUp: true,
+        header: this.widget.headerWidget ?? FBListView.waterDropHeader(),
+        footer: this.widget.footerWidget ?? FBListView.emptyFooter(),
+        onRefresh: () => model.onRefresh(),
+        onLoading: () => model.onLoading(),
+        physics: AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+        child: _listViewContent(model.items, isLoading: model.isLoading));
+  }
+
   _smartRefresher() => Container(
       child: WatchState<FBListViewLogic>(
-          logic: _logic,
-          builder: (context, model) => (this.widget.onEmptyWidget != null &&
-                      model.items.isEmpty) ||
-                  this.widget.debugEmptyWidget
-              ? this.widget.onEmptyWidget
-              : SmartRefresher(
-                  reverse: this.widget.isReverse,
-                  controller: model.refreshController,
-                  enablePullDown: this.widget.isReverse ? false : true,
-                  enablePullUp: true,
-                  header:
-                      this.widget.headerWidget ?? FBListView.waterDropHeader(),
-                  footer: this.widget.footerWidget ?? FBListView.emptyFooter(),
-                  onRefresh: () => model.onRefresh(),
-                  onLoading: () => model.onLoading(),
-                  physics: AlwaysScrollableScrollPhysics(
-                      parent: BouncingScrollPhysics()),
-                  child: _listViewContent(model.items,
-                      isLoading: model.isLoading))));
+          logic: _logic, builder: (context, model) => _listView(model)));
 
   _sliver(List<Widget> child) => CustomScrollView(
       controller: this.widget.controller,
