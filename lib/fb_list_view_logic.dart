@@ -252,9 +252,9 @@ class FBListViewLogic<T extends Model> extends ViewLogic
         query = query.startAfterDocument(_lastSnap);
       var doc = await query.getDocuments();
       _lastSnap = doc.documents.last;
-      data = await Future.wait<T>(doc?.documents?.map((snap) {
+      data = await Future.wait<T>(doc?.documents?.map((snap) async {
         try {
-          return forEachSnap(snap);
+          return await forEachSnap(snap);
         } catch (err) {
           _printErr(err, isItem: true);
           return null;
