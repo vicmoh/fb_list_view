@@ -181,13 +181,11 @@ class FBListView<T extends Model> extends StatefulWidget {
   /// The footer of when paginating to the next page.
   static Widget emptyFooter() => CustomFooter(builder: (context, status) {
         if (status == LoadStatus.loading)
-          return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 30),
-              child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    Container(child: CircularProgressIndicator())
-                  ]));
+          return Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Container(child: CircularProgressIndicator())
+              ]);
         return Container();
       });
 
@@ -235,29 +233,24 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
   _smartRefresher() => Container(
       child: WatchState<FBListViewLogic>(
           logic: _logic,
-          builder: (context, model) {
-            return SmartRefresher(
-                reverse: this.widget.isReverse,
-                controller: model.refreshController,
-                enablePullDown: this.widget.isReverse ? false : true,
-                enablePullUp: true,
-                header:
-                    this.widget.headerWidget ?? FBListView.waterDropHeader(),
-                footer: this.widget.footerWidget ?? FBListView.emptyFooter(),
-                onRefresh: () => model.onRefresh(),
-                onLoading: () => model.onLoading(),
-                physics: AlwaysScrollableScrollPhysics(
-                    parent: BouncingScrollPhysics()),
-                child:
-                    _listViewContent(model.items, isLoading: model.isLoading));
-          }));
+          builder: (context, model) => SmartRefresher(
+              reverse: this.widget.isReverse,
+              controller: model.refreshController,
+              enablePullDown: this.widget.isReverse ? false : true,
+              enablePullUp: true,
+              header: this.widget.headerWidget ?? FBListView.waterDropHeader(),
+              footer: this.widget.footerWidget ?? FBListView.emptyFooter(),
+              onRefresh: () => model.onRefresh(),
+              onLoading: () => model.onLoading(),
+              physics: AlwaysScrollableScrollPhysics(
+                  parent: BouncingScrollPhysics()),
+              child:
+                  _listViewContent(model.items, isLoading: model.isLoading))));
 
-  _sliver(List<Widget> child) {
-    return CustomScrollView(
-        controller: this.widget.controller,
-        physics: AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-        slivers: child);
-  }
+  _sliver(List<Widget> child) => CustomScrollView(
+      controller: this.widget.controller,
+      physics: AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+      slivers: child);
 
   _sliverList(List<Model> items) => SliverPadding(
       padding: this.widget.padding,
