@@ -17,7 +17,7 @@ enum FBTypes {
 
 /// View logic for managing list Firebase fetches and pagination.
 class FBListViewLogic<T extends Model> extends ViewLogic
-    with UniquifyListModel {
+    with UniquifyListModel<T> {
   /* ---------------------------------- Logic --------------------------------- */
 
   /// The list view type.
@@ -124,7 +124,10 @@ class FBListViewLogic<T extends Model> extends ViewLogic
                 _cloudFirestoreListen().then((value) => status(true));
               if (_type == FBTypes.realtimeDatabase)
                 _realtimeDatabaseListen().then((value) => status(true));
-            }).catchError((err) => onFetchCatch(err))));
+            }).catchError((err) {
+              refresh(ViewState.asError);
+              onFetchCatch(err);
+            })));
 
     /// Callback refresher
     if (refresher != null) refresher(this.onRefresh);
@@ -132,8 +135,6 @@ class FBListViewLogic<T extends Model> extends ViewLogic
 
   @override
   void dispose() {
-    const debug = false;
-    if (debug) Log(this, 'FBListViewLogic.dispose(): Invoked.');
     _cloudFirestoreSubscription?.cancel();
     _realtimeDatabaseSubscription?.cancel();
     _refreshController?.dispose();
@@ -164,7 +165,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
       replaceItems(await _firestoreFetch());
     else if (_type == FBTypes.realtimeDatabase)
       replaceItems(await _realtimeDatabaseFetch());
-    if (orderBy != null) items.sort(orderBy);
+    if (orderBy != null) getItems<T>().sort(orderBy);
     _refreshController?.refreshToIdle();
     refresh(ViewState.asComplete);
   }
@@ -183,13 +184,9 @@ class FBListViewLogic<T extends Model> extends ViewLogic
   }
 
   Future<void> _realtimeDatabaseListen() async {
-    const debug = false;
-
     /// On child updated
     _realtimeDatabaseSubscription =
         dbReference?.limitToLast(1)?.onChildAdded?.listen((event) async {
-      if (debug)
-        Log(this, 'Realtime listen on child added: ${event?.snapshot?.value}');
       try {
         addItems([
           await forEachJson(event?.snapshot?.key,
@@ -198,7 +195,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
       } catch (err) {
         _printErr(err, isItem: true);
       }
-      if (orderBy != null) items.sort(orderBy);
+      if (orderBy != null) getItems<T>().sort(orderBy);
       refresh(ViewState.asComplete);
     });
   }
@@ -215,7 +212,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
             }
           })),
           growable: true));
-      if (orderBy != null) items.sort(orderBy);
+      if (orderBy != null) getItems<T>().sort(orderBy);
       refresh(ViewState.asComplete);
     });
   }
@@ -224,7 +221,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     List<T> data = [];
     try {
       var query = dbQuery ?? dbReference.orderByKey().limitToLast(30);
-      if (isNext) query = query.endAt(items.last.id);
+      if (isNext) query = query.endAt(getItems<T>().last.id);
       var snap = await query.once();
       var jsonObj = Map<String, dynamic>.from(snap.value);
       data = await Future.wait<T>(jsonObj.entries.toList().map((each) async {
