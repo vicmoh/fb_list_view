@@ -281,11 +281,11 @@ packages:
     dependency: "direct dev"
     description:
       path: "."
-      ref: "v0.0.11"
-      resolved-ref: "574ebfd964f50c228c4d26aeac50634960557415"
+      ref: "v0.0.16"
+      resolved-ref: "742f57d5501bc6f7618403f6effb4aa52cfe0aa7"
       url: "git://github.com/vicmoh/provider_skeleton.git"
     source: git
-    version: "0.0.10"
+    version: "0.0.16"
   pull_to_refresh:
     dependency: "direct dev"
     description:
