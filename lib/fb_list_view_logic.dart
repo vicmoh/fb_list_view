@@ -235,7 +235,6 @@ class FBListViewLogic<T extends Model> extends ViewLogic
       var jsonObj = Map<String, dynamic>.from(snap.value);
       data = await Future.wait<T>(jsonObj.entries.toList().map((each) async {
         try {
-          Log(this, '${each.key}');
           return await forEachJson(
               each.key, Map<String, dynamic>.from(each.value));
         } catch (err) {
