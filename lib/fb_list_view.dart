@@ -268,7 +268,7 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
 
   _smartRefresher() => Container(
       child: WatchState<FBListViewLogic>(
-          logic: _logic, builder: (context, model) => _listView(model)));
+          logic: _logic, builder: (model) => _listView(model)));
 
   _sliver(List<Widget> child) => CustomScrollView(
       controller: this.widget.controller,
