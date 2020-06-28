@@ -109,9 +109,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
   /* -------------------------------- Lifecycle ------------------------------- */
 
   void status(bool val) =>
-        this.onFirstFetchStatus == null 
-          ? null 
-          : this.onFirstFetchStatus(val);
+      this.onFirstFetchStatus == null ? null : this.onFirstFetchStatus(val);
 
   @override
   void initState() {
@@ -121,16 +119,14 @@ class FBListViewLogic<T extends Model> extends ViewLogic
 
     /// Set status as loading.
     refresh(ViewState.asLoading);
-    Future.microtask(() => Future.delayed(Duration(milliseconds: fetchDelay))
-        .then((_) {
-              if (_type == FBTypes.cloudFirestore)
-                _cloudFirestoreListen();
-              if (_type == FBTypes.realtimeDatabase)
-                _realtimeDatabaseListen();
+    Future.microtask(
+        () => Future.delayed(Duration(milliseconds: fetchDelay)).then((_) {
+              if (_type == FBTypes.cloudFirestore) _cloudFirestoreListen();
+              if (_type == FBTypes.realtimeDatabase) _realtimeDatabaseListen();
             })).catchError((err) {
-              refresh(ViewState.asError);
-              onFetchCatch(err);
-            });
+      refresh(ViewState.asError);
+      onFetchCatch(err);
+    });
 
     /// Callback refresher
     if (refresher != null) refresher(this.onRefresh);
