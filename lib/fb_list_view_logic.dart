@@ -108,13 +108,10 @@ class FBListViewLogic<T extends Model> extends ViewLogic
 
   /* -------------------------------- Lifecycle ------------------------------- */
 
-  void status(bool val) =>
-      this.onFirstFetchStatus == null ? null : this.onFirstFetchStatus(val);
-
   @override
   void initState() {
     super.initState();
-    status(false);
+    _status(false);
     _refreshController = RefreshController();
 
     /// Set status as loading.
@@ -122,7 +119,11 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     Future.microtask(
         () => Future.delayed(Duration(milliseconds: fetchDelay)).then((_) {
               if (_type == FBTypes.cloudFirestore) _cloudFirestoreListen();
-              if (_type == FBTypes.realtimeDatabase) _realtimeDatabaseListen();
+              if (_type == FBTypes.realtimeDatabase)
+                this.onRefresh().then((_) { 
+                  _status(true);
+                  _realtimeDatabaseListen();
+                });
             })).catchError((err) {
       refresh(ViewState.asError);
       onFetchCatch(err);
@@ -156,6 +157,12 @@ class FBListViewLogic<T extends Model> extends ViewLogic
   /* -------------------------------------------------------------------------- */
   /*                                  Functions                                 */
   /* -------------------------------------------------------------------------- */
+
+  ///The default limit value.
+  static const DEFAULT_LIMIT = 30; 
+
+  void _status(bool val) =>
+      this.onFirstFetchStatus == null ? null : this.onFirstFetchStatus(val);
 
   /// On First time load.
   Future<void> onRefresh() async {
@@ -191,7 +198,6 @@ class FBListViewLogic<T extends Model> extends ViewLogic
           await forEachJson(event?.snapshot?.key,
               Map<String, dynamic>.from(event?.snapshot?.value)),
         ]);
-        status(true);
       } catch (err) {
         _printErr(err, isItem: true);
       }
@@ -213,7 +219,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
           })),
           growable: true));
       _lastSnap = data.documentChanges.last.document;
-      status(true);
+      _status(true);
       if (orderBy != null) getItems<T>().sort(orderBy);
       refresh(ViewState.asComplete);
     });
@@ -222,12 +228,13 @@ class FBListViewLogic<T extends Model> extends ViewLogic
   Future<List<T>> _realtimeDatabaseFetch({bool isNext = false}) async {
     List<T> data = [];
     try {
-      var query = dbQuery ?? dbReference.orderByKey().limitToLast(30);
+      var query = dbQuery ?? dbReference.orderByKey().limitToLast(DEFAULT_LIMIT);
       if (isNext) query = query.endAt(getItems<T>().last.id);
       var snap = await query.once();
       var jsonObj = Map<String, dynamic>.from(snap.value);
       data = await Future.wait<T>(jsonObj.entries.toList().map((each) async {
         try {
+          Log(this, '${each.key}');
           return await forEachJson(
               each.key, Map<String, dynamic>.from(each.value));
         } catch (err) {
