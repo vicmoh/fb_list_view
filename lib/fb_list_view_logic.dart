@@ -120,7 +120,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
         () => Future.delayed(Duration(milliseconds: fetchDelay)).then((_) {
               if (_type == FBTypes.cloudFirestore) _cloudFirestoreListen();
               if (_type == FBTypes.realtimeDatabase)
-                this.onRefresh().then((_) { 
+                this.onRefresh().then((_) {
                   _status(true);
                   _realtimeDatabaseListen();
                 });
@@ -159,7 +159,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
   /* -------------------------------------------------------------------------- */
 
   ///The default limit value.
-  static const DEFAULT_LIMIT = 30; 
+  static const DEFAULT_LIMIT = 30;
 
   void _status(bool val) =>
       this.onFirstFetchStatus == null ? null : this.onFirstFetchStatus(val);
@@ -228,7 +228,8 @@ class FBListViewLogic<T extends Model> extends ViewLogic
   Future<List<T>> _realtimeDatabaseFetch({bool isNext = false}) async {
     List<T> data = [];
     try {
-      var query = dbQuery ?? dbReference.orderByKey().limitToLast(DEFAULT_LIMIT);
+      var query =
+          dbQuery ?? dbReference.orderByKey().limitToLast(DEFAULT_LIMIT);
       if (isNext) query = query.endAt(getItems<T>().last.id);
       var snap = await query.once();
       var jsonObj = Map<String, dynamic>.from(snap.value);
