@@ -107,7 +107,7 @@ class FBListView<T extends Model> extends StatefulWidget {
   /// it will will create query limit of 30
   /// based on recent timestamp. If you want
   /// a manual query use [dbQuery]. If [dbQuery]
-  /// exist it will use that instead. if this
+  /// exist it will use that instead. If this
   /// is not null it will to listen new
   /// data.
   final _db.DatabaseReference dbReference;

@@ -108,26 +108,29 @@ class FBListViewLogic<T extends Model> extends ViewLogic
 
   /* -------------------------------- Lifecycle ------------------------------- */
 
+  void status(bool val) =>
+        this.onFirstFetchStatus == null 
+          ? null 
+          : this.onFirstFetchStatus(val);
+
   @override
   void initState() {
     super.initState();
-    final status = (bool val) =>
-        this.onFirstFetchStatus == null ? null : this.onFirstFetchStatus(val);
     status(false);
     _refreshController = RefreshController();
 
     /// Set status as loading.
     refresh(ViewState.asLoading);
     Future.microtask(() => Future.delayed(Duration(milliseconds: fetchDelay))
-        .then((_) => this.onRefresh().then((_) {
+        .then((_) {
               if (_type == FBTypes.cloudFirestore)
-                _cloudFirestoreListen().then((value) => status(true));
+                _cloudFirestoreListen();
               if (_type == FBTypes.realtimeDatabase)
-                _realtimeDatabaseListen().then((value) => status(true));
-            }).catchError((err) {
+                _realtimeDatabaseListen();
+            })).catchError((err) {
               refresh(ViewState.asError);
               onFetchCatch(err);
-            })));
+            });
 
     /// Callback refresher
     if (refresher != null) refresher(this.onRefresh);
@@ -192,6 +195,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
           await forEachJson(event?.snapshot?.key,
               Map<String, dynamic>.from(event?.snapshot?.value)),
         ]);
+        status(true);
       } catch (err) {
         _printErr(err, isItem: true);
       }
@@ -212,6 +216,8 @@ class FBListViewLogic<T extends Model> extends ViewLogic
             }
           })),
           growable: true));
+      _lastSnap = data.documentChanges.last.document;
+      status(true);
       if (orderBy != null) getItems<T>().sort(orderBy);
       refresh(ViewState.asComplete);
     });
