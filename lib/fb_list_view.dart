@@ -75,6 +75,11 @@ class FBListView<T extends Model> extends StatefulWidget {
   /// This callback must return list of sliver widgets.
   final List<Widget> Function(Widget sliverList) slivers;
 
+  /// Function callback to determine if the logic
+  /// is currently fetching.
+  /// Callback false if fetching, and true if complete.
+  final Function(bool) onFirstFetchStatus;
+
   /* ---------------------------------- Logic --------------------------------- */
 
   /// The list view type.
@@ -140,6 +145,7 @@ class FBListView<T extends Model> extends StatefulWidget {
     this.footerWidget,
     this.slivers,
     this.alwaysShowLoader = false,
+    this.onFirstFetchStatus,
   })  : _type = _Type.cloudFirestore,
         assert(!(builder == null)),
         assert(fsQuery != null),
@@ -170,6 +176,7 @@ class FBListView<T extends Model> extends StatefulWidget {
     this.footerWidget,
     this.slivers,
     this.alwaysShowLoader = false,
+    this.onFirstFetchStatus,
   })  : assert(!(dbQuery == null && dbReference == null)),
         assert(!(builder == null)),
         assert(forEachJson != null),
@@ -222,8 +229,11 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
     _isFirstTimeLoading = true;
     if (this.widget._type == _Type.cloudFirestore)
       _logic = FBListViewLogic<T>.cloudFirestore(
-          onFirstFetchStatus: (status) =>
-              setState(() => _isFirstTimeLoading = !status),
+          onFirstFetchStatus: (status) {
+                setState(() => _isFirstTimeLoading = !status);
+                if (this.widget.onFirstFetchStatus != null)
+                  this.widget.onFirstFetchStatus(status);
+              },
           fsQuery: this.widget.fsQuery,
           forEachSnap: this.widget.forEachSnap,
           fetchDelay: this.widget.fetchDelay,
@@ -232,8 +242,11 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
           refresher: this.widget.refresher);
     else if (this.widget._type == _Type.realtimeDatabase)
       _logic = FBListViewLogic<T>.realtimeDatabase(
-          onFirstFetchStatus: (status) =>
-              setState(() => _isFirstTimeLoading = !status),
+          onFirstFetchStatus: (status) {
+                setState(() => _isFirstTimeLoading = !status); 
+                if (this.widget.onFirstFetchStatus != null)
+                  this.widget.onFirstFetchStatus(status);
+              },
           dbReference: this.widget.dbReference,
           dbQuery: this.widget.dbQuery,
           forEachJson: this.widget.forEachJson,
