@@ -230,10 +230,10 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
     if (this.widget._type == _Type.cloudFirestore)
       _logic = FBListViewLogic<T>.cloudFirestore(
           onFirstFetchStatus: (status) {
-                setState(() => _isFirstTimeLoading = !status);
-                if (this.widget.onFirstFetchStatus != null)
-                  this.widget.onFirstFetchStatus(status);
-              },
+            setState(() => _isFirstTimeLoading = !status);
+            if (this.widget.onFirstFetchStatus != null)
+              this.widget.onFirstFetchStatus(status);
+          },
           fsQuery: this.widget.fsQuery,
           forEachSnap: this.widget.forEachSnap,
           fetchDelay: this.widget.fetchDelay,
@@ -243,10 +243,10 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
     else if (this.widget._type == _Type.realtimeDatabase)
       _logic = FBListViewLogic<T>.realtimeDatabase(
           onFirstFetchStatus: (status) {
-                setState(() => _isFirstTimeLoading = !status); 
-                if (this.widget.onFirstFetchStatus != null)
-                  this.widget.onFirstFetchStatus(status);
-              },
+            setState(() => _isFirstTimeLoading = !status);
+            if (this.widget.onFirstFetchStatus != null)
+              this.widget.onFirstFetchStatus(status);
+          },
           dbReference: this.widget.dbReference,
           dbQuery: this.widget.dbQuery,
           forEachJson: this.widget.forEachJson,
