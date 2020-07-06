@@ -221,6 +221,12 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
   bool _isFirstTimeLoading = true;
 
   @override
+  void dispose() {
+    _logic?.dispose();
+    super.dispose();
+  }
+
+  @override
   void initState() {
     super.initState();
     this.widget.padding ?? EdgeInsets.all(0);
