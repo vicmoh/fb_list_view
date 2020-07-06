@@ -189,20 +189,30 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     refresh(ViewState.asComplete);
   }
 
+  Future<void> _updateRealtimeData(event) async {
+    try {
+      addItems([
+        await forEachJson(event?.snapshot?.key,
+            Map<String, dynamic>.from(event?.snapshot?.value)),
+      ]);
+    } catch (err) {
+      _printErr(err, isItem: true);
+    }
+    if (orderBy != null) getItems<T>().sort(orderBy);
+    refresh(ViewState.asComplete);
+  }
+
   Future<void> _realtimeDatabaseListen() async {
     /// On child updated
     _realtimeDatabaseSubscription =
         dbReference?.limitToLast(1)?.onChildAdded?.listen((event) async {
-      try {
-        addItems([
-          await forEachJson(event?.snapshot?.key,
-              Map<String, dynamic>.from(event?.snapshot?.value)),
-        ]);
-      } catch (err) {
-        _printErr(err, isItem: true);
-      }
-      if (orderBy != null) getItems<T>().sort(orderBy);
-      refresh(ViewState.asComplete);
+      await _updateRealtimeData(event);
+    });
+
+    /// On child changes
+    _realtimeDatabaseSubscription =
+        dbReference?.limitToLast(1)?.onChildAdded?.listen((event) async {
+      await _updateRealtimeData(event);
     });
   }
 
