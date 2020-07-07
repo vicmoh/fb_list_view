@@ -136,7 +136,8 @@ class FBListViewLogic<T extends Model> extends ViewLogic
   @override
   void dispose() {
     _cloudFirestoreSubscription?.cancel();
-    _realtimeDatabaseSubscription?.cancel();
+    _realtimeDatabaseSubscriptionOnAdded?.cancel();
+    _realtimeDatabaseSubscriptionOnChanged?.cancel();
     _refreshController?.dispose();
     super.dispose();
   }
@@ -152,7 +153,8 @@ class FBListViewLogic<T extends Model> extends ViewLogic
   // Keep track of snaps and subs
   _fs.DocumentSnapshot _lastSnap;
   StreamSubscription _cloudFirestoreSubscription;
-  StreamSubscription _realtimeDatabaseSubscription;
+  StreamSubscription _realtimeDatabaseSubscriptionOnAdded;
+  StreamSubscription _realtimeDatabaseSubscriptionOnChanged;
 
   /* -------------------------------------------------------------------------- */
   /*                                  Functions                                 */
@@ -204,13 +206,13 @@ class FBListViewLogic<T extends Model> extends ViewLogic
 
   Future<void> _realtimeDatabaseListen() async {
     /// On child updated
-    _realtimeDatabaseSubscription =
+    _realtimeDatabaseSubscriptionOnAdded =
         dbReference?.limitToLast(1)?.onChildAdded?.listen((event) async {
       await _updateRealtimeData(event);
     });
 
     /// On child changes
-    _realtimeDatabaseSubscription =
+    _realtimeDatabaseSubscriptionOnChanged =
         dbReference?.limitToLast(1)?.onChildAdded?.listen((event) async {
       await _updateRealtimeData(event);
     });
