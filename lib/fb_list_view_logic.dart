@@ -218,20 +218,24 @@ class FBListViewLogic<T extends Model> extends ViewLogic
 
   Future<void> _cloudFirestoreListen() async {
     _cloudFirestoreSubscription = fsQuery?.snapshots()?.listen((data) async {
-      addItems(List<T>.from(
-          await Future.wait<T>(data.documentChanges.map((docChange) async {
-            try {
-              return await forEachSnap(docChange.document);
-            } catch (err) {
-              _printErr(err, isItem: true);
-              return null;
-            }
-          })),
-          growable: true));
-      _lastSnap = data.documentChanges.last.document;
-      _status(true);
-      if (orderBy != null) getItems<T>().sort(orderBy);
-      refresh(ViewState.asComplete);
+      try {
+        addItems(List<T>.from(
+            await Future.wait<T>(data.documentChanges.map((docChange) async {
+              try {
+                return await forEachSnap(docChange.document);
+              } catch (err) {
+                _printErr(err, isItem: true);
+                return null;
+              }
+            })),
+            growable: true));
+        _lastSnap = data.documentChanges.last.document;
+        _status(true);
+        if (orderBy != null) getItems<T>().sort(orderBy);
+        refresh(ViewState.asComplete);
+      } catch (err) {
+        _printErr(err, isItem: false);
+      }
     });
   }
 
