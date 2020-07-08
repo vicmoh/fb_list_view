@@ -80,6 +80,9 @@ class FBListView<T extends Model> extends StatefulWidget {
   /// Callback false if fetching, and true if complete.
   final Function(bool) onFirstFetchStatus;
 
+  /// The scroll physics of the list view.
+  final ScrollPhysics scrollPhysics;
+
   /* ---------------------------------- Logic --------------------------------- */
 
   /// The list view type.
@@ -146,6 +149,7 @@ class FBListView<T extends Model> extends StatefulWidget {
     this.slivers,
     this.alwaysShowLoader = false,
     this.onFirstFetchStatus,
+    this.scrollPhysics,
   })  : _type = _Type.cloudFirestore,
         assert(!(builder == null)),
         assert(fsQuery != null),
@@ -177,6 +181,7 @@ class FBListView<T extends Model> extends StatefulWidget {
     this.slivers,
     this.alwaysShowLoader = false,
     this.onFirstFetchStatus,
+    this.scrollPhysics,
   })  : assert(!(dbQuery == null && dbReference == null)),
         assert(!(builder == null)),
         assert(forEachJson != null),
@@ -281,7 +286,8 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
         footer: this.widget.footerWidget ?? FBListView.emptyFooter(),
         onRefresh: () => model.onRefresh(),
         onLoading: () => model.onLoading(),
-        physics: AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+        physics: widget.scrollPhysics ??
+            AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
         child: _listViewContent(model.items, isLoading: model.isLoading));
   }
 
@@ -289,10 +295,8 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
       child: WatchState<FBListViewLogic>(
           logic: _logic, builder: (model) => _listView(model)));
 
-  _sliver(List<Widget> child) => CustomScrollView(
-      controller: this.widget.controller,
-      physics: AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-      slivers: child);
+  _sliver(List<Widget> child) =>
+      CustomScrollView(controller: this.widget.controller, slivers: child);
 
   _sliverList(List<Model> items) => SliverPadding(
       padding: this.widget.padding,
@@ -303,7 +307,6 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
               childCount: items.length)));
 
   _listViewBuilder(List<Model> items) => ListView.builder(
-      physics: AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
       controller: this.widget.controller,
       padding: this.widget.padding,
       itemCount: items.length,
