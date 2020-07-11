@@ -195,7 +195,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     try {
       addItems([
         await forEachJson(event?.snapshot?.key,
-            Map<String, dynamic>.from(event?.snapshot?.value)),
+            Map<String, dynamic>.from(event?.snapshot?.value ?? {})),
       ]);
     } catch (err) {
       _printErr(err, isItem: true);
@@ -248,11 +248,11 @@ class FBListViewLogic<T extends Model> extends ViewLogic
           dbQuery ?? dbReference.orderByKey().limitToLast(DEFAULT_LIMIT);
       if (isNext) query = query.endAt(getItems<T>().last.id);
       var snap = await query.once();
-      var jsonObj = Map<String, dynamic>.from(snap.value);
+      var jsonObj = Map<String, dynamic>.from(snap.value ?? {});
       data = await Future.wait<T>(jsonObj.entries.toList().map((each) async {
         try {
           return await forEachJson(
-              each.key, Map<String, dynamic>.from(each.value));
+              each.key, Map<String, dynamic>.from(each.value ?? {}));
         } catch (err) {
           _printErr(err, isItem: true);
           return null;
