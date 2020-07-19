@@ -38,6 +38,13 @@ class FBListViewLogic<T extends Model> extends ViewLogic
   /// Fetch delay on initialize state in milliseconds.
   final int fetchDelay;
 
+  /// The number of items on first fetch.
+  /// This is Firestore only.
+  final int numberOfFirstFetch;
+
+  /// Paginate 30 items.
+  final int limitBy;
+
   /* -------------------------------- Firestore ------------------------------- */
 
   /// Firestore query.
@@ -83,6 +90,8 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     this.fetchDelay = 0,
     this.refresher,
     this.onFirstFetchStatus,
+    this.limitBy = 30,
+    this.numberOfFirstFetch = 10,
   })  : _type = FBTypes.cloudFirestore,
         assert(fsQuery != null),
         assert(forEachSnap != null),
@@ -100,11 +109,13 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     this.fetchDelay = 0,
     this.refresher,
     this.onFirstFetchStatus,
+    this.limitBy = 30,
   })  : assert(!(dbQuery == null && dbReference == null)),
         assert(forEachJson != null),
         _type = FBTypes.realtimeDatabase,
         this.fsQuery = null,
-        this.forEachSnap = null;
+        this.forEachSnap = null,
+        this.numberOfFirstFetch = 1;
 
   /* -------------------------------- Lifecycle ------------------------------- */
 
@@ -119,7 +130,10 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     Future.microtask(
         () => Future.delayed(Duration(milliseconds: fetchDelay)).then((_) {
               if (_type == FBTypes.cloudFirestore)
-                this._cloudFirestoreListen().then((_) => _status(true));
+                this.onRefresh().then((_) {
+                  _status(true);
+                  _cloudFirestoreListen();
+                });
               else if (_type == FBTypes.realtimeDatabase)
                 this.onRefresh().then((_) {
                   _status(true);
@@ -151,7 +165,14 @@ class FBListViewLogic<T extends Model> extends ViewLogic
   get refreshController => _refreshController;
   RefreshController _refreshController;
 
-  // Keep track of snaps and subs
+  /// Determine if the first fetch complete.
+  bool _isFirstFetchCompleted = false;
+  void _status(bool val) {
+    _isFirstFetchCompleted = val;
+    if (this.onFirstFetchStatus != null) this.onFirstFetchStatus(val);
+  }
+
+  /// Keep track of snaps and subs
   _fs.DocumentSnapshot _lastSnap;
   StreamSubscription _cloudFirestoreSubscription;
   StreamSubscription _realtimeDatabaseSubscriptionOnAdded;
@@ -162,10 +183,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
   /* -------------------------------------------------------------------------- */
 
   ///The default limit value.
-  static const DEFAULT_LIMIT = 30;
-
-  void _status(bool val) =>
-      this.onFirstFetchStatus == null ? null : this.onFirstFetchStatus(val);
+  static const REMOVE_LIMIT_MESSAGE = 'REMOVE LIMIT ON FIRESTORE QUERY!';
 
   /// On First time load.
   Future<void> onRefresh() async {
@@ -211,16 +229,29 @@ class FBListViewLogic<T extends Model> extends ViewLogic
         dbReference?.limitToLast(1)?.onChildAdded?.listen((event) async {
       await _updateRealtimeData(event);
     });
-
-    /// On child changes
     _realtimeDatabaseSubscriptionOnChanged =
         dbReference?.limitToLast(1)?.onChildChanged?.listen((event) async {
       await _updateRealtimeData(event);
     });
   }
 
+  _fs.Query _firestoreQuery() {
+    _fs.Query query;
+    try {
+      if (this._isFirstFetchCompleted)
+        query = fsQuery.limit(this.limitBy);
+      else
+        query = fsQuery.limit(this.numberOfFirstFetch);
+    } catch (err) {
+      assert(false, REMOVE_LIMIT_MESSAGE);
+      query = fsQuery;
+    }
+    return query;
+  }
+
   Future<void> _cloudFirestoreListen() async {
-    _cloudFirestoreSubscription = fsQuery?.snapshots()?.listen((data) async {
+    _cloudFirestoreSubscription =
+        _firestoreQuery()?.snapshots()?.listen((data) async {
       try {
         addItems(List<T>.from(
             await Future.wait<T>(data.documentChanges.map((docChange) async {
@@ -245,8 +276,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
   Future<List<T>> _realtimeDatabaseFetch({bool isNext = false}) async {
     List<T> data = [];
     try {
-      var query =
-          dbQuery ?? dbReference.orderByKey().limitToLast(DEFAULT_LIMIT);
+      var query = dbQuery ?? dbReference.orderByKey().limitToLast(this.limitBy);
       if (isNext) query = query.endAt(getItems<T>().last.id);
       var snap = await query.once();
       var jsonObj = Map<String, dynamic>.from(snap.value ?? {});
@@ -269,8 +299,8 @@ class FBListViewLogic<T extends Model> extends ViewLogic
 
   Future<List<T>> _firestoreFetch({bool isNext = false}) async {
     List<T> data = [];
+    _fs.Query query = _firestoreQuery();
     try {
-      var query = fsQuery;
       if (isNext && _lastSnap != null)
         query = query.startAfterDocument(_lastSnap);
       var doc = await query.getDocuments();
