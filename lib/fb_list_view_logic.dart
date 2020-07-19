@@ -241,7 +241,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
       if (this._isFirstFetchCompleted) query = fsQuery.limit(this.limitBy);
       query = fsQuery.limit(this.numberOfFirstFetch);
     } catch (err) {
-      _printErr(err);
+      _printErr(REMOVE_LIMIT_MESSAGE + ' -> $err');
       query = fsQuery;
     }
     return query;
