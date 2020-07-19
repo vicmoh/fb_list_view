@@ -83,6 +83,9 @@ class FBListView<T extends Model> extends StatefulWidget {
   /// The scroll physics of the list view.
   final ScrollPhysics scrollPhysics;
 
+  /// The viewport at which the widget will be cached.
+  final double cacheExtent;
+
   /* ---------------------------------- Logic --------------------------------- */
 
   /// The list view type.
@@ -150,6 +153,7 @@ class FBListView<T extends Model> extends StatefulWidget {
     this.alwaysShowLoader = false,
     this.onFirstFetchStatus,
     this.scrollPhysics,
+    this.cacheExtent = 0,
   })  : _type = _Type.cloudFirestore,
         assert(!(builder == null)),
         assert(fsQuery != null),
@@ -182,6 +186,7 @@ class FBListView<T extends Model> extends StatefulWidget {
     this.alwaysShowLoader = false,
     this.onFirstFetchStatus,
     this.scrollPhysics,
+    this.cacheExtent = 0,
   })  : assert(!(dbQuery == null && dbReference == null)),
         assert(!(builder == null)),
         assert(forEachJson != null),
@@ -282,6 +287,7 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
         controller: model.refreshController,
         enablePullDown: this.widget.isReverse ? false : true,
         enablePullUp: true,
+        cacheExtent: widget.cacheExtent,
         header: this.widget.headerWidget ?? FBListView.waterDropHeader(),
         footer: this.widget.footerWidget ?? FBListView.emptyFooter(),
         onRefresh: () => model.onRefresh(),
