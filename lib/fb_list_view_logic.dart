@@ -118,8 +118,9 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     refresh(ViewState.asLoading);
     Future.microtask(
         () => Future.delayed(Duration(milliseconds: fetchDelay)).then((_) {
-              if (_type == FBTypes.cloudFirestore) _cloudFirestoreListen();
-              if (_type == FBTypes.realtimeDatabase)
+              if (_type == FBTypes.cloudFirestore)
+                this._cloudFirestoreListen().then((_) => _status(true));
+              else if (_type == FBTypes.realtimeDatabase)
                 this.onRefresh().then((_) {
                   _status(true);
                   _realtimeDatabaseListen();
@@ -213,7 +214,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
 
     /// On child changes
     _realtimeDatabaseSubscriptionOnChanged =
-        dbReference?.limitToLast(1)?.onChildAdded?.listen((event) async {
+        dbReference?.limitToLast(1)?.onChildChanged?.listen((event) async {
       await _updateRealtimeData(event);
     });
   }
