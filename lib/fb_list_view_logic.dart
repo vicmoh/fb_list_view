@@ -238,8 +238,10 @@ class FBListViewLogic<T extends Model> extends ViewLogic
   _fs.Query _firestoreQuery() {
     _fs.Query query;
     try {
-      if (this._isFirstFetchCompleted) query = fsQuery.limit(this.limitBy);
-      else query = fsQuery.limit(this.numberOfFirstFetch);
+      if (this._isFirstFetchCompleted)
+        query = fsQuery.limit(this.limitBy);
+      else
+        query = fsQuery.limit(this.numberOfFirstFetch);
     } catch (err) {
       _printErr(REMOVE_LIMIT_MESSAGE + ' -> $err');
       query = fsQuery;
