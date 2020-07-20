@@ -20,11 +20,6 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     with UniquifyListModel<T> {
   /* ---------------------------------- Logic --------------------------------- */
 
-  /// Determine if items are added
-  /// at the beginning or at the end
-  /// of the list.
-  final bool addItemsInReverse;
-
   /// The list view type.
   final FBTypes _type;
 
@@ -97,7 +92,6 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     this.onFirstFetchStatus,
     this.limitBy = 30,
     this.numberOfFirstFetch = 10,
-    this.addItemsInReverse = false,
   })  : _type = FBTypes.cloudFirestore,
         assert(fsQuery != null),
         assert(forEachSnap != null),
@@ -116,7 +110,6 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     this.refresher,
     this.onFirstFetchStatus,
     this.limitBy = 30,
-    this.addItemsInReverse = false,
   })  : assert(!(dbQuery == null && dbReference == null)),
         assert(forEachJson != null),
         _type = FBTypes.realtimeDatabase,

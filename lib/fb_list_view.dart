@@ -263,8 +263,7 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
           fetchDelay: this.widget.fetchDelay,
           onFetchCatch: this.widget.onFetchCatch,
           orderBy: this.widget.orderBy,
-          refresher: this.widget.refresher,
-          addItemsInReverse: widget.isReverse);
+          refresher: this.widget.refresher);
     else if (this.widget._type == _Type.realtimeDatabase)
       _logic = FBListViewLogic<T>.realtimeDatabase(
           onFirstFetchStatus: (status) {
@@ -278,8 +277,7 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
           fetchDelay: this.widget.fetchDelay,
           onFetchCatch: this.widget.onFetchCatch,
           orderBy: this.widget.orderBy,
-          refresher: this.widget.refresher,
-          addItemsInReverse: widget.isReverse);
+          refresher: this.widget.refresher);
   }
 
   @override
