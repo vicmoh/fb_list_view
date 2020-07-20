@@ -15,6 +15,12 @@ enum _Type { realtimeDatabase, cloudFirestore }
 /// refresher where you can refresh the page.
 class FBListView<T extends Model> extends StatefulWidget {
 /* ----------------------------- Widget setting ----------------------------- */
+
+  /// Determine if items are added
+  /// at the beginning or at the end
+  /// of the list.
+  final bool addItemsInReverse;
+
   /// Widget of when the list is empty.
   /// This widget is placed outside the widget
   /// in  comparison to [onEmptyList].
@@ -154,6 +160,7 @@ class FBListView<T extends Model> extends StatefulWidget {
     this.onFirstFetchStatus,
     this.scrollPhysics,
     this.cacheExtent = 0,
+    this.addItemsInReverse,
   })  : _type = _Type.cloudFirestore,
         assert(!(builder == null)),
         assert(fsQuery != null),
@@ -187,6 +194,7 @@ class FBListView<T extends Model> extends StatefulWidget {
     this.onFirstFetchStatus,
     this.scrollPhysics,
     this.cacheExtent = 0,
+    this.addItemsInReverse,
   })  : assert(!(dbQuery == null && dbReference == null)),
         assert(!(builder == null)),
         assert(forEachJson != null),
@@ -255,7 +263,8 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
           fetchDelay: this.widget.fetchDelay,
           onFetchCatch: this.widget.onFetchCatch,
           orderBy: this.widget.orderBy,
-          refresher: this.widget.refresher);
+          refresher: this.widget.refresher,
+          addItemsInReverse: widget.isReverse);
     else if (this.widget._type == _Type.realtimeDatabase)
       _logic = FBListViewLogic<T>.realtimeDatabase(
           onFirstFetchStatus: (status) {
@@ -269,7 +278,8 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
           fetchDelay: this.widget.fetchDelay,
           onFetchCatch: this.widget.onFetchCatch,
           orderBy: this.widget.orderBy,
-          refresher: this.widget.refresher);
+          refresher: this.widget.refresher,
+          addItemsInReverse: widget.isReverse);
   }
 
   @override
