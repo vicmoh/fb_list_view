@@ -86,7 +86,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     @required this.fsQuery,
     @required this.forEachSnap,
     this.onFetchCatch,
-    this.orderBy,
+    this.orderBy = Model.orderByRecent,
     this.fetchDelay = 0,
     this.refresher,
     this.onFirstFetchStatus,
@@ -104,7 +104,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     @required this.forEachJson,
     this.dbQuery,
     this.dbReference,
-    this.orderBy,
+    this.orderBy = Model.orderByRecent,
     this.onFetchCatch,
     this.fetchDelay = 0,
     this.refresher,
@@ -189,10 +189,9 @@ class FBListViewLogic<T extends Model> extends ViewLogic
   Future<void> onRefresh() async {
     refresh(ViewState.asLoading);
     if (_type == FBTypes.cloudFirestore)
-      replaceItems(await _firestoreFetch());
+      replaceItems(await _firestoreFetch(), orderBy: orderBy);
     else if (_type == FBTypes.realtimeDatabase)
-      replaceItems(await _realtimeDatabaseFetch());
-    if (orderBy != null) getItems<T>().sort(orderBy);
+      replaceItems(await _realtimeDatabaseFetch(), orderBy: orderBy);
     _refreshController?.refreshToIdle();
     refresh(ViewState.asComplete);
   }
@@ -202,10 +201,9 @@ class FBListViewLogic<T extends Model> extends ViewLogic
   /// SmartRefresher onLoading.
   Future<void> onLoading() async {
     if (_type == FBTypes.cloudFirestore)
-      addItems(await _firestoreFetch(isNext: true));
+      addItems(await _firestoreFetch(isNext: true), orderBy: orderBy);
     else if (_type == FBTypes.realtimeDatabase)
-      addItems(await _realtimeDatabaseFetch(isNext: true));
-    if (orderBy != null) items.sort(orderBy);
+      addItems(await _realtimeDatabaseFetch(isNext: true), orderBy: orderBy);
     _refreshController?.loadComplete();
     refresh(ViewState.asComplete);
   }
@@ -215,11 +213,10 @@ class FBListViewLogic<T extends Model> extends ViewLogic
       addItems([
         await forEachJson(event?.snapshot?.key,
             Map<String, dynamic>.from(event?.snapshot?.value ?? {})),
-      ]);
+      ], orderBy: orderBy);
     } catch (err) {
       _printErr(err, isItem: true);
     }
-    if (orderBy != null) getItems<T>().sort(orderBy);
     refresh(ViewState.asComplete);
   }
 
@@ -253,19 +250,21 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     _cloudFirestoreSubscription =
         _firestoreQuery()?.snapshots()?.listen((data) async {
       try {
-        addItems(List<T>.from(
-            await Future.wait<T>(data.documentChanges.map((docChange) async {
-              try {
-                return await forEachSnap(docChange.document);
-              } catch (err) {
-                _printErr(err, isItem: true);
-                return null;
-              }
-            })),
-            growable: true));
+        addItems(
+            List<T>.from(
+                await Future.wait<T>(
+                    data.documentChanges.map((docChange) async {
+                  try {
+                    return await forEachSnap(docChange.document);
+                  } catch (err) {
+                    _printErr(err, isItem: true);
+                    return null;
+                  }
+                })),
+                growable: true),
+            orderBy: orderBy);
         _lastSnap = data.documentChanges.last.document;
         _status(true);
-        if (orderBy != null) getItems<T>().sort(orderBy);
         refresh(ViewState.asComplete);
       } catch (err) {
         _printErr(err, isItem: false);
