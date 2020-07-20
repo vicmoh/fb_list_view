@@ -20,6 +20,11 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     with UniquifyListModel<T> {
   /* ---------------------------------- Logic --------------------------------- */
 
+  /// Determine if items are added
+  /// at the beginning or at the end
+  /// of the list.
+  final bool addItemsInReverse;
+
   /// The list view type.
   final FBTypes _type;
 
@@ -92,6 +97,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     this.onFirstFetchStatus,
     this.limitBy = 30,
     this.numberOfFirstFetch = 10,
+    this.addItemsInReverse = false,
   })  : _type = FBTypes.cloudFirestore,
         assert(fsQuery != null),
         assert(forEachSnap != null),
@@ -110,6 +116,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     this.refresher,
     this.onFirstFetchStatus,
     this.limitBy = 30,
+    this.addItemsInReverse = false,
   })  : assert(!(dbQuery == null && dbReference == null)),
         assert(forEachJson != null),
         _type = FBTypes.realtimeDatabase,
@@ -202,9 +209,10 @@ class FBListViewLogic<T extends Model> extends ViewLogic
   /// SmartRefresher onLoading.
   Future<void> onLoading() async {
     if (_type == FBTypes.cloudFirestore)
-      addItems(await _firestoreFetch(isNext: true));
+      addItems(await _firestoreFetch(isNext: true), atStart: addItemsInReverse);
     else if (_type == FBTypes.realtimeDatabase)
-      addItems(await _realtimeDatabaseFetch(isNext: true));
+      addItems(await _realtimeDatabaseFetch(isNext: true),
+          atStart: addItemsInReverse);
     if (orderBy != null) items.sort(orderBy);
     _refreshController?.loadComplete();
     refresh(ViewState.asComplete);
@@ -215,7 +223,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
       addItems([
         await forEachJson(event?.snapshot?.key,
             Map<String, dynamic>.from(event?.snapshot?.value ?? {})),
-      ]);
+      ], atStart: addItemsInReverse);
     } catch (err) {
       _printErr(err, isItem: true);
     }
@@ -253,16 +261,19 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     _cloudFirestoreSubscription =
         _firestoreQuery()?.snapshots()?.listen((data) async {
       try {
-        addItems(List<T>.from(
-            await Future.wait<T>(data.documentChanges.map((docChange) async {
-              try {
-                return await forEachSnap(docChange.document);
-              } catch (err) {
-                _printErr(err, isItem: true);
-                return null;
-              }
-            })),
-            growable: true));
+        addItems(
+            List<T>.from(
+                await Future.wait<T>(
+                    data.documentChanges.map((docChange) async {
+                  try {
+                    return await forEachSnap(docChange.document);
+                  } catch (err) {
+                    _printErr(err, isItem: true);
+                    return null;
+                  }
+                })),
+                growable: true),
+            atStart: addItemsInReverse);
         _lastSnap = data.documentChanges.last.document;
         _status(true);
         if (orderBy != null) getItems<T>().sort(orderBy);
