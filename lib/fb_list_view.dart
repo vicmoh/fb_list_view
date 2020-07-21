@@ -16,11 +16,6 @@ enum _Type { realtimeDatabase, cloudFirestore }
 class FBListView<T extends Model> extends StatefulWidget {
 /* ----------------------------- Widget setting ----------------------------- */
 
-  /// Determine if items are added
-  /// at the beginning or at the end
-  /// of the list.
-  final bool addItemsInReverse;
-
   /// Widget of when the list is empty.
   /// This widget is placed outside the widget
   /// in  comparison to [onEmptyList].
@@ -116,6 +111,18 @@ class FBListView<T extends Model> extends StatefulWidget {
 
   /* -------------------------------- Firebase -------------------------------- */
 
+  /// Used for pagination. For example when
+  /// ordering by timestamp in firebase real time
+  /// The startAt and endAt value must be the value
+  /// in which you are ordering.
+  ///
+  /// Example:
+  /// ```
+  /// onNextQuery: (query, items) =>
+  ///             query.endAt(items.last.timestamp.millisecondsSinceEpoch - 1)
+  /// ```
+  final _db.Query Function(_db.Query, List<T> items) onNextQuery;
+
   /// Query for the list view, you can
   /// also used reference.
   final _db.Query dbQuery;
@@ -160,14 +167,14 @@ class FBListView<T extends Model> extends StatefulWidget {
     this.onFirstFetchStatus,
     this.scrollPhysics,
     this.cacheExtent = 0,
-    this.addItemsInReverse,
   })  : _type = _Type.cloudFirestore,
         assert(!(builder == null)),
         assert(fsQuery != null),
         assert(forEachSnap != null),
         this.dbQuery = null,
         this.forEachJson = null,
-        this.dbReference = null;
+        this.dbReference = null,
+        this.onNextQuery = null;
 
   /// List view for Firebase DB
   FBListView.realtimeDatabase({
@@ -194,7 +201,7 @@ class FBListView<T extends Model> extends StatefulWidget {
     this.onFirstFetchStatus,
     this.scrollPhysics,
     this.cacheExtent = 0,
-    this.addItemsInReverse,
+    this.onNextQuery,
   })  : assert(!(dbQuery == null && dbReference == null)),
         assert(!(builder == null)),
         assert(forEachJson != null),
@@ -266,6 +273,7 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
           refresher: this.widget.refresher);
     else if (this.widget._type == _Type.realtimeDatabase)
       _logic = FBListViewLogic<T>.realtimeDatabase(
+          onNextQuery: this.widget.onNextQuery,
           onFirstFetchStatus: (status) {
             setState(() => _isFirstTimeLoading = !status);
             if (this.widget.onFirstFetchStatus != null)

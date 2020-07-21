@@ -57,6 +57,18 @@ class FBListViewLogic<T extends Model> extends ViewLogic
 
   /* -------------------------------- Firebase -------------------------------- */
 
+  /// Used for pagination. For example when
+  /// ordering by timestamp in firebase real time
+  /// The startAt and endAt value must be the value
+  /// in which you are ordering.
+  ///
+  /// Example:
+  /// ```
+  /// onNextQuery: (query, items) =>
+  ///             query.endAt(items.last.timestamp.millisecondsSinceEpoch - 1)
+  /// ```
+  final _db.Query Function(_db.Query, List<T> items) onNextQuery;
+
   /// Query for the list view, you can
   /// also used reference.
   final _db.Query dbQuery;
@@ -97,7 +109,8 @@ class FBListViewLogic<T extends Model> extends ViewLogic
         assert(forEachSnap != null),
         this.dbQuery = null,
         this.forEachJson = null,
-        this.dbReference = null;
+        this.dbReference = null,
+        this.onNextQuery = null;
 
   /// List view for Firebase DB
   FBListViewLogic.realtimeDatabase({
@@ -110,6 +123,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     this.refresher,
     this.onFirstFetchStatus,
     this.limitBy = 30,
+    this.onNextQuery,
   })  : assert(!(dbQuery == null && dbReference == null)),
         assert(forEachJson != null),
         _type = FBTypes.realtimeDatabase,
@@ -276,7 +290,10 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     List<T> data = [];
     try {
       var query = dbQuery ?? dbReference.orderByKey().limitToLast(this.limitBy);
-      if (isNext) query = query.endAt(getItems<T>().last.id);
+      if (isNext)
+        query = this.onNextQuery != null
+            ? this.onNextQuery(query, getItems<T>())
+            : query.endAt(getItems<T>().last.id);
       var snap = await query.once();
       var jsonObj = Map<String, dynamic>.from(snap.value ?? {});
       data = await Future.wait<T>(jsonObj.entries.toList().map((each) async {
