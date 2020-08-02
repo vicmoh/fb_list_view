@@ -206,7 +206,6 @@ class FBListViewLogic<T extends Model> extends ViewLogic
       replaceItems(await _firestoreFetch(), orderBy: orderBy);
     else if (_type == FBTypes.realtimeDatabase)
       replaceItems(await _realtimeDatabaseFetch(), orderBy: orderBy);
-    _refreshController?.refreshToIdle();
     refresh(ViewState.asComplete);
   }
 
@@ -218,7 +217,6 @@ class FBListViewLogic<T extends Model> extends ViewLogic
       addItems(await _firestoreFetch(isNext: true), orderBy: orderBy);
     else if (_type == FBTypes.realtimeDatabase)
       addItems(await _realtimeDatabaseFetch(isNext: true), orderBy: orderBy);
-    _refreshController?.loadComplete();
     refresh(ViewState.asComplete);
   }
 
@@ -305,6 +303,10 @@ class FBListViewLogic<T extends Model> extends ViewLogic
           return null;
         }
       }));
+      if (isNext)
+        _refreshController?.loadComplete();
+      else
+        _refreshController?.refreshToIdle();
     } catch (err) {
       if (isNext) _refreshController?.loadNoData();
       if (onFetchCatch != null) onFetchCatch(err);
@@ -329,6 +331,10 @@ class FBListViewLogic<T extends Model> extends ViewLogic
           return null;
         }
       }));
+      if (isNext)
+        _refreshController?.loadComplete();
+      else
+        _refreshController?.refreshToIdle();
     } catch (err) {
       if (isNext) _refreshController?.loadNoData();
       if (onFetchCatch != null) onFetchCatch(err);
