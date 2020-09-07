@@ -328,6 +328,7 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
               childCount: items.length)));
 
   _listViewBuilder(List<Model> items) => ListView.builder(
+      physics: AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
       controller: this.widget.controller,
       padding: this.widget.padding,
       itemCount: items.length,
