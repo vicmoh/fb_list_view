@@ -176,7 +176,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
   /* -------------------------------------------------------------------------- */
 
   /// The refresh controller for smart refresher.
-  get refreshController => _refreshController;
+  RefreshController get refreshController => _refreshController;
   RefreshController _refreshController;
 
   /// Determine if the first fetch complete.
