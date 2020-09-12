@@ -15,6 +15,8 @@ enum _Type { realtimeDatabase, cloudFirestore }
 /// refresher where you can refresh the page.
 class FBListView<T extends Model> extends StatefulWidget {
 /* ----------------------------- Widget setting ----------------------------- */
+  /// Get Firebase lits view logic from callback.
+  final Function(FBListViewLogic) getLogic;
 
   /// Widget of when the list is empty.
   /// This widget is placed outside the widget
@@ -167,6 +169,7 @@ class FBListView<T extends Model> extends StatefulWidget {
     this.onFirstFetchStatus,
     this.scrollPhysics,
     this.cacheExtent = 0,
+    this.getLogic,
   })  : _type = _Type.cloudFirestore,
         assert(!(builder == null)),
         assert(fsQuery != null),
@@ -202,6 +205,7 @@ class FBListView<T extends Model> extends StatefulWidget {
     this.scrollPhysics,
     this.cacheExtent = 0,
     this.onNextQuery,
+    this.getLogic,
   })  : assert(!(dbQuery == null && dbReference == null)),
         assert(!(builder == null)),
         assert(forEachJson != null),
@@ -286,6 +290,8 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
           onFetchCatch: this.widget.onFetchCatch,
           orderBy: this.widget.orderBy,
           refresher: this.widget.refresher);
+
+    if (widget.getLogic != null) widget.getLogic(_logic);
   }
 
   @override
