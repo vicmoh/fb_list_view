@@ -15,8 +15,8 @@ enum _Type { realtimeDatabase, cloudFirestore }
 /// refresher where you can refresh the page.
 class FBListView<T extends Model> extends StatefulWidget {
 /* ----------------------------- Widget setting ----------------------------- */
-  /// Get Firebase lits view logic from callback.
-  final Function(FBListViewLogic) getLogic;
+  /// Get Firebase list view logic from callback.
+  final Function(FBListViewLogic<T>) getLogic;
 
   /// Widget of when the list is empty.
   /// This widget is placed outside the widget
@@ -246,7 +246,7 @@ class FBListView<T extends Model> extends StatefulWidget {
 }
 
 class _FBListViewState<T extends Model> extends State<FBListView<T>> {
-  FBListViewLogic _logic;
+  FBListViewLogic<T> _logic;
   bool _isFirstTimeLoading = true;
 
   @override
@@ -297,7 +297,7 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
   @override
   Widget build(BuildContext context) => _smartRefresher();
 
-  _listView(FBListViewLogic model) {
+  _listView(FBListViewLogic<T> model) {
     var isEmptyWidget =
         this.widget.onEmptyWidget != null && model.items.isEmpty;
     if (isEmptyWidget && model.isLoading)
@@ -319,29 +319,29 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
   }
 
   _smartRefresher() => Container(
-      child: WatchState<FBListViewLogic>(
+      child: WatchState<FBListViewLogic<T>>(
           logic: _logic, builder: (model) => _listView(model)));
 
   _sliver(List<Widget> child) =>
       CustomScrollView(controller: this.widget.controller, slivers: child);
 
-  _sliverList(List<Model> items) => SliverPadding(
+  _sliverList(List<T> items) => SliverPadding(
       padding: this.widget.padding,
       sliver: SliverList(
           delegate: SliverChildBuilderDelegate(
               (context, index) =>
-                  this.widget.builder(List.castFrom<Model, T>(items), index),
+                  this.widget.builder(items, index),
               childCount: items.length)));
 
-  _listViewBuilder(List<Model> items) => ListView.builder(
+  _listViewBuilder(List<T> items) => ListView.builder(
       physics: AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
       controller: this.widget.controller,
       padding: this.widget.padding,
       itemCount: items.length,
       itemBuilder: (context, index) =>
-          this.widget.builder(List.castFrom<Model, T>(items), index));
+          this.widget.builder(items, index));
 
-  _listViewContent(List<Model> items, {@required bool isLoading}) {
+  _listViewContent(List<T> items, {@required bool isLoading}) {
     if ((this.widget.loaderWidget != null &&
             this.widget.alwaysShowLoader &&
             isLoading) ||
