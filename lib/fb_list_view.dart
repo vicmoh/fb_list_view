@@ -329,8 +329,7 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
       padding: this.widget.padding,
       sliver: SliverList(
           delegate: SliverChildBuilderDelegate(
-              (context, index) =>
-                  this.widget.builder(items, index),
+              (context, index) => this.widget.builder(items, index),
               childCount: items.length)));
 
   _listViewBuilder(List<T> items) => ListView.builder(
@@ -338,8 +337,7 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
       controller: this.widget.controller,
       padding: this.widget.padding,
       itemCount: items.length,
-      itemBuilder: (context, index) =>
-          this.widget.builder(items, index));
+      itemBuilder: (context, index) => this.widget.builder(items, index));
 
   _listViewContent(List<T> items, {@required bool isLoading}) {
     if ((this.widget.loaderWidget != null &&
