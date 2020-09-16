@@ -1,3 +1,9 @@
-## [0.0.1] - TODO: Add release date.
+## [0.0.9] - 09/16/20
 
-* TODO: Describe initial release.
+* Order by default order based
+on first first fetch instead of
+order by most recent.
+
+## [0.0.1] - Initial release.
+
+* Initial release.

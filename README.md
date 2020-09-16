@@ -18,7 +18,7 @@ dependencies:
   fb_list_view:
     git:
       url: git://github.com/vicmoh/fb_list_view.git
-      ref: v0.0.8
+      ref: v0.0.9
 
   #------------------------------------------------------
   # below are package dependencies that FBListView needs.
