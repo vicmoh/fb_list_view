@@ -1,3 +1,8 @@
+## [0.0.10] - 09/26/20
+
+* Add options to able
+to disable live stream fetches.
+
 ## [0.0.9] - 09/16/20
 
 * Order by default order based

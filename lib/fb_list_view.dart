@@ -91,6 +91,9 @@ class FBListView<T extends Model> extends StatefulWidget {
 
   /* ---------------------------------- Logic --------------------------------- */
 
+  /// Disable live stream of new items.
+  final bool disableListener;
+
   /// The list view type.
   final _Type _type;
 
@@ -170,6 +173,7 @@ class FBListView<T extends Model> extends StatefulWidget {
     this.scrollPhysics,
     this.cacheExtent = 0,
     this.getLogic,
+    this.disableListener = false,
   })  : _type = _Type.cloudFirestore,
         assert(!(builder == null)),
         assert(fsQuery != null),
@@ -206,6 +210,7 @@ class FBListView<T extends Model> extends StatefulWidget {
     this.cacheExtent = 0,
     this.onNextQuery,
     this.getLogic,
+    this.disableListener = false,
   })  : assert(!(dbQuery == null && dbReference == null)),
         assert(!(builder == null)),
         assert(forEachJson != null),
@@ -264,6 +269,7 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
     _isFirstTimeLoading = true;
     if (this.widget._type == _Type.cloudFirestore)
       _logic = FBListViewLogic<T>.cloudFirestore(
+          disableListener: widget.disableListener,
           onFirstFetchStatus: (status) {
             setState(() => _isFirstTimeLoading = !status);
             if (this.widget.onFirstFetchStatus != null)
@@ -277,6 +283,7 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
           refresher: this.widget.refresher);
     else if (this.widget._type == _Type.realtimeDatabase)
       _logic = FBListViewLogic<T>.realtimeDatabase(
+          disableListener: widget.disableListener,
           onNextQuery: this.widget.onNextQuery,
           onFirstFetchStatus: (status) {
             setState(() => _isFirstTimeLoading = !status);

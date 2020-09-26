@@ -20,6 +20,9 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     with UniquifyListModel<T> {
   /* ---------------------------------- Logic --------------------------------- */
 
+  /// Disable live stream of new items.
+  final bool disableListener;
+
   /// The list view type.
   final FBTypes _type;
 
@@ -104,6 +107,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     this.onFirstFetchStatus,
     this.limitBy = 30,
     this.numberOfFirstFetch = 10,
+    this.disableListener = false,
   })  : _type = FBTypes.cloudFirestore,
         assert(fsQuery != null),
         assert(forEachSnap != null),
@@ -124,6 +128,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     this.onFirstFetchStatus,
     this.limitBy = 30,
     this.onNextQuery,
+    this.disableListener = false
   })  : assert(!(dbQuery == null && dbReference == null)),
         assert(forEachJson != null),
         _type = FBTypes.realtimeDatabase,
@@ -146,12 +151,14 @@ class FBListViewLogic<T extends Model> extends ViewLogic
               if (_type == FBTypes.cloudFirestore)
                 this.onRefresh().then((_) {
                   _status(true);
-                  _cloudFirestoreListen();
+                  if (!this.disableListener)
+                    _cloudFirestoreListen();
                 });
               else if (_type == FBTypes.realtimeDatabase)
                 this.onRefresh().then((_) {
                   _status(true);
-                  _realtimeDatabaseListen();
+                  if (!this.disableListener)
+                    _realtimeDatabaseListen();
                 });
             })).catchError((err) {
       refresh(ViewState.asError);
