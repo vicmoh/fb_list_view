@@ -117,19 +117,19 @@ class FBListViewLogic<T extends Model> extends ViewLogic
         this.onNextQuery = null;
 
   /// List view for Firebase DB
-  FBListViewLogic.realtimeDatabase({
-    @required this.forEachJson,
-    this.dbQuery,
-    this.dbReference,
-    this.orderBy,
-    this.onFetchCatch,
-    this.fetchDelay = 0,
-    this.refresher,
-    this.onFirstFetchStatus,
-    this.limitBy = 30,
-    this.onNextQuery,
-    this.disableListener = false
-  })  : assert(!(dbQuery == null && dbReference == null)),
+  FBListViewLogic.realtimeDatabase(
+      {@required this.forEachJson,
+      this.dbQuery,
+      this.dbReference,
+      this.orderBy,
+      this.onFetchCatch,
+      this.fetchDelay = 0,
+      this.refresher,
+      this.onFirstFetchStatus,
+      this.limitBy = 30,
+      this.onNextQuery,
+      this.disableListener = false})
+      : assert(!(dbQuery == null && dbReference == null)),
         assert(forEachJson != null),
         _type = FBTypes.realtimeDatabase,
         this.fsQuery = null,
@@ -151,14 +151,12 @@ class FBListViewLogic<T extends Model> extends ViewLogic
               if (_type == FBTypes.cloudFirestore)
                 this.onRefresh().then((_) {
                   _status(true);
-                  if (!this.disableListener)
-                    _cloudFirestoreListen();
+                  if (!this.disableListener) _cloudFirestoreListen();
                 });
               else if (_type == FBTypes.realtimeDatabase)
                 this.onRefresh().then((_) {
                   _status(true);
-                  if (!this.disableListener)
-                    _realtimeDatabaseListen();
+                  if (!this.disableListener) _realtimeDatabaseListen();
                 });
             })).catchError((err) {
       refresh(ViewState.asError);
