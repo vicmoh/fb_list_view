@@ -2,6 +2,7 @@
 
 * Add options to able
 to disable live stream fetches.
+* Default first fetch limit is now 30.
 
 ## [0.0.9] - 09/16/20
 
