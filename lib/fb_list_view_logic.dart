@@ -106,7 +106,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     this.refresher,
     this.onFirstFetchStatus,
     this.limitBy = 30,
-    this.numberOfFirstFetch = 10,
+    this.numberOfFirstFetch = 30,
     this.disableListener = false,
   })  : _type = FBTypes.cloudFirestore,
         assert(fsQuery != null),
