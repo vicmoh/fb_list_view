@@ -320,8 +320,7 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
         footer: this.widget.footerWidget ?? FBListView.emptyFooter(),
         onRefresh: () => model.onRefresh(),
         onLoading: () => model.onLoading(),
-        physics: widget.scrollPhysics ??
-            AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+        physics: widget.scrollPhysics,
         child: _listViewContent(model.items, isLoading: model.isLoading));
   }
 
@@ -340,7 +339,7 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
               childCount: items.length)));
 
   _listViewBuilder(List<T> items) => ListView.builder(
-      physics: AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+      physics: widget.scrollPhysics,
       controller: this.widget.controller,
       padding: this.widget.padding,
       itemCount: items.length,
