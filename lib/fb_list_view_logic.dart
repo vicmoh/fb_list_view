@@ -33,6 +33,9 @@ class FBListViewLogic<T extends Model> extends ViewLogic
   /// when fetching will be on this callback.
   final Function(dynamic) onFetchCatch;
 
+  /// On first fetch error catch.
+  final Function(dynamic) onFirstFetchCatch;
+
   /// Function callback to determine if the logic
   /// is currently fetching.
   /// Callback false if fetching, and true if complete.
@@ -108,6 +111,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     this.limitBy = 30,
     this.numberOfFirstFetch = 30,
     this.disableListener = false,
+    this.onFirstFetchCatch,
   })  : _type = FBTypes.cloudFirestore,
         assert(fsQuery != null),
         assert(forEachSnap != null),
@@ -117,19 +121,20 @@ class FBListViewLogic<T extends Model> extends ViewLogic
         this.onNextQuery = null;
 
   /// List view for Firebase DB
-  FBListViewLogic.realtimeDatabase(
-      {@required this.forEachJson,
-      this.dbQuery,
-      this.dbReference,
-      this.orderBy,
-      this.onFetchCatch,
-      this.fetchDelay = 0,
-      this.refresher,
-      this.onFirstFetchStatus,
-      this.limitBy = 30,
-      this.onNextQuery,
-      this.disableListener = false})
-      : assert(!(dbQuery == null && dbReference == null)),
+  FBListViewLogic.realtimeDatabase({
+    @required this.forEachJson,
+    this.dbQuery,
+    this.dbReference,
+    this.orderBy,
+    this.onFetchCatch,
+    this.fetchDelay = 0,
+    this.refresher,
+    this.onFirstFetchStatus,
+    this.limitBy = 30,
+    this.onNextQuery,
+    this.disableListener = false,
+    this.onFirstFetchCatch,
+  })  : assert(!(dbQuery == null && dbReference == null)),
         assert(forEachJson != null),
         _type = FBTypes.realtimeDatabase,
         this.fsQuery = null,
@@ -152,11 +157,15 @@ class FBListViewLogic<T extends Model> extends ViewLogic
                 this.onRefresh().then((_) {
                   _status(true);
                   if (!this.disableListener) _cloudFirestoreListen();
+                }).catchError((err) {
+                  if (this.onFirstFetchCatch != null) onFirstFetchCatch(err);
                 });
               else if (_type == FBTypes.realtimeDatabase)
                 this.onRefresh().then((_) {
                   _status(true);
                   if (!this.disableListener) _realtimeDatabaseListen();
+                }).catchError((err) {
+                  if (this.onFirstFetchCatch != null) onFirstFetchCatch(err);
                 });
             })).catchError((err) {
       refresh(ViewState.asError);

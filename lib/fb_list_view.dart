@@ -83,6 +83,9 @@ class FBListView<T extends Model> extends StatefulWidget {
   /// Callback false if fetching, and true if complete.
   final Function(bool) onFirstFetchStatus;
 
+  /// On first fetch error catch.
+  final Function(dynamic) onFirstFetchCatch;
+
   /// The scroll physics of the list view.
   final ScrollPhysics scrollPhysics;
 
@@ -174,6 +177,7 @@ class FBListView<T extends Model> extends StatefulWidget {
     this.cacheExtent = 0,
     this.getLogic,
     this.disableListener = false,
+    this.onFirstFetchCatch,
   })  : _type = _Type.cloudFirestore,
         assert(!(builder == null)),
         assert(fsQuery != null),
@@ -211,6 +215,7 @@ class FBListView<T extends Model> extends StatefulWidget {
     this.onNextQuery,
     this.getLogic,
     this.disableListener = false,
+    this.onFirstFetchCatch,
   })  : assert(!(dbQuery == null && dbReference == null)),
         assert(!(builder == null)),
         assert(forEachJson != null),
@@ -269,6 +274,7 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
     _isFirstTimeLoading = true;
     if (this.widget._type == _Type.cloudFirestore)
       _logic = FBListViewLogic<T>.cloudFirestore(
+          onFirstFetchCatch: widget.onFirstFetchCatch,
           disableListener: widget.disableListener,
           onFirstFetchStatus: (status) {
             setState(() => _isFirstTimeLoading = !status);
@@ -283,6 +289,7 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
           refresher: this.widget.refresher);
     else if (this.widget._type == _Type.realtimeDatabase)
       _logic = FBListViewLogic<T>.realtimeDatabase(
+          onFirstFetchCatch: widget.onFirstFetchCatch,
           disableListener: widget.disableListener,
           onNextQuery: this.widget.onNextQuery,
           onFirstFetchStatus: (status) {

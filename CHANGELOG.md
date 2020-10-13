@@ -1,3 +1,8 @@
+## [0.0.12] - 10/13/20
+
+* Added onFirstFetchCatch to catch errors
+on the first fetch.
+
 ## [0.0.11] - 10/10/20
 
 * Remove default always 
