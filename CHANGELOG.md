@@ -1,4 +1,9 @@
-## [0.0.13] - 10/13/20
+## [0.0.14] - 10/19/20
+
+* Fixed Firebase Database Real-time
+Listener to listen any new data or changes.
+
+## [0.0.13] - 10/19/20
 
 * Added fsListen and dbListen for
 listening new data when added to the list.
