@@ -1,3 +1,8 @@
+## [0.0.13] - 10/13/20
+
+* Added fsListen and dbListen for
+listening new data when added to the list.
+
 ## [0.0.12] - 10/13/20
 
 * Added onFirstFetchCatch to catch errors

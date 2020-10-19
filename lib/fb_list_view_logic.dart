@@ -53,6 +53,9 @@ class FBListViewLogic<T extends Model> extends ViewLogic
 
   /* -------------------------------- Firestore ------------------------------- */
 
+  /// Listen to new data on Firestore.
+  final Function(_fs.QuerySnapshot) fsListen;
+
   /// Firestore query.
   final _fs.Query fsQuery;
 
@@ -62,6 +65,9 @@ class FBListViewLogic<T extends Model> extends ViewLogic
   final Future<T> Function(_fs.DocumentSnapshot) forEachSnap;
 
   /* -------------------------------- Firebase -------------------------------- */
+
+  /// Listen to new data on Firebase database.
+  final Function(_db.Event) dbListen;
 
   /// Used for pagination. For example when
   /// ordering by timestamp in firebase real time
@@ -112,13 +118,15 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     this.numberOfFirstFetch = 30,
     this.disableListener = false,
     this.onFirstFetchCatch,
+    this.fsListen,
   })  : _type = FBTypes.cloudFirestore,
         assert(fsQuery != null),
         assert(forEachSnap != null),
         this.dbQuery = null,
         this.forEachJson = null,
         this.dbReference = null,
-        this.onNextQuery = null;
+        this.onNextQuery = null,
+        this.dbListen = null;
 
   /// List view for Firebase DB
   FBListViewLogic.realtimeDatabase({
@@ -134,11 +142,13 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     this.onNextQuery,
     this.disableListener = false,
     this.onFirstFetchCatch,
+    this.dbListen,
   })  : assert(!(dbQuery == null && dbReference == null)),
         assert(forEachJson != null),
         _type = FBTypes.realtimeDatabase,
         this.fsQuery = null,
         this.forEachSnap = null,
+        this.fsListen = null,
         this.numberOfFirstFetch = 1;
 
   /* -------------------------------- Lifecycle ------------------------------- */
@@ -240,6 +250,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
         await forEachJson(event?.snapshot?.key,
             Map<String, dynamic>.from(event?.snapshot?.value ?? {})),
       ], orderBy: orderBy);
+      if (this.dbListen != null) this.dbListen(event);
     } catch (err) {
       _printErr(err, isItem: true);
     }
@@ -292,6 +303,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
         _lastSnap = data.documentChanges.last.document;
         _status(true);
         refresh(ViewState.asComplete);
+        if (this.fsListen != null) this.fsListen(data);
       } catch (err) {
         _printErr(err, isItem: false);
       }
