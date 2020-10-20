@@ -259,12 +259,16 @@ class FBListViewLogic<T extends Model> extends ViewLogic
 
   Future<void> _realtimeDatabaseListen() async {
     _realtimeDatabaseSubscriptionOnAdded =
-        (dbReference?.limitToLast(1) ?? dbQuery)?.onChildAdded?.listen((event) async {
+        (dbReference?.limitToLast(1) ?? dbQuery)
+            ?.onChildAdded
+            ?.listen((event) async {
       await _updateRealtimeData(event);
     });
 
     _realtimeDatabaseSubscriptionOnChanged =
-        (dbReference?.limitToLast(1) ?? dbQuery)?.onChildChanged?.listen((event) async {
+        (dbReference?.limitToLast(1) ?? dbQuery)
+            ?.onChildChanged
+            ?.listen((event) async {
       await _updateRealtimeData(event);
     });
   }
