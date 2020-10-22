@@ -14,7 +14,15 @@ enum _Type { realtimeDatabase, cloudFirestore }
 /// Schmick list view containing the smart
 /// refresher where you can refresh the page.
 class FBListView<T extends Model> extends StatefulWidget {
-/* ----------------------------- Widget setting ----------------------------- */
+  /* ----------------------------- Widget setting ----------------------------- */
+
+  /// With this is true, all new data
+  /// that is streamed and listend from
+  /// the database not be added to the item list.
+  /// You can use the [fsListen] or [dbListen]
+  /// to get the item.
+  final bool withoutNewItemsToList;
+
   /// Get Firebase list view logic from callback.
   final Function(FBListViewLogic<T>) getLogic;
 
@@ -110,7 +118,7 @@ class FBListView<T extends Model> extends StatefulWidget {
   /* -------------------------------- Firestore ------------------------------- */
 
   /// Listen to new data on Firestore.
-  final Function(_fs.QuerySnapshot) fsListen;
+  final Future<void> Function(FBListViewLogic<T>, _fs.QuerySnapshot) fsListen;
 
   /// Firestore query.
   final _fs.Query fsQuery;
@@ -123,7 +131,7 @@ class FBListView<T extends Model> extends StatefulWidget {
   /* -------------------------------- Firebase -------------------------------- */
 
   /// Listen to new data on Firebase database.
-  final Function(_db.Event) dbListen;
+  final Future<void> Function(FBListViewLogic<T>, _db.Event) dbListen;
 
   /// Used for pagination. For example when
   /// ordering by timestamp in firebase real time
@@ -185,6 +193,7 @@ class FBListView<T extends Model> extends StatefulWidget {
     this.disableListener = false,
     this.onFirstFetchCatch,
     this.fsListen,
+    this.withoutNewItemsToList = false,
   })  : _type = _Type.cloudFirestore,
         assert(!(builder == null)),
         assert(fsQuery != null),
@@ -225,6 +234,7 @@ class FBListView<T extends Model> extends StatefulWidget {
     this.disableListener = false,
     this.onFirstFetchCatch,
     this.dbListen,
+    this.withoutNewItemsToList = false,
   })  : assert(!(dbQuery == null && dbReference == null)),
         assert(!(builder == null)),
         assert(forEachJson != null),
@@ -284,6 +294,7 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
     _isFirstTimeLoading = true;
     if (this.widget._type == _Type.cloudFirestore)
       _logic = FBListViewLogic<T>.cloudFirestore(
+          withoutNewItemsToList: widget.withoutNewItemsToList,
           fsListen: widget.fsListen,
           onFirstFetchCatch: widget.onFirstFetchCatch,
           disableListener: widget.disableListener,
@@ -300,6 +311,7 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
           refresher: this.widget.refresher);
     else if (this.widget._type == _Type.realtimeDatabase)
       _logic = FBListViewLogic<T>.realtimeDatabase(
+          withoutNewItemsToList: widget.withoutNewItemsToList,
           dbListen: widget.dbListen,
           onFirstFetchCatch: widget.onFirstFetchCatch,
           disableListener: widget.disableListener,

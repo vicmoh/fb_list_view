@@ -20,6 +20,13 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     with UniquifyListModel<T> {
   /* ---------------------------------- Logic --------------------------------- */
 
+  /// With this is true, all new data
+  /// that is streamed and listend from
+  /// the database not be added to the item list.
+  /// You can use the [fsListen] or [dbListen]
+  /// to get the item.
+  final bool withoutNewItemsToList;
+
   /// Disable live stream of new items.
   final bool disableListener;
 
@@ -54,7 +61,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
   /* -------------------------------- Firestore ------------------------------- */
 
   /// Listen to new data on Firestore.
-  final Function(_fs.QuerySnapshot) fsListen;
+  final Future<void> Function(FBListViewLogic<T>, _fs.QuerySnapshot) fsListen;
 
   /// Firestore query.
   final _fs.Query fsQuery;
@@ -67,7 +74,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
   /* -------------------------------- Firebase -------------------------------- */
 
   /// Listen to new data on Firebase database.
-  final Function(_db.Event) dbListen;
+  final Future<void> Function(FBListViewLogic<T>, _db.Event) dbListen;
 
   /// Used for pagination. For example when
   /// ordering by timestamp in firebase real time
@@ -119,6 +126,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     this.disableListener = false,
     this.onFirstFetchCatch,
     this.fsListen,
+    this.withoutNewItemsToList = false,
   })  : _type = FBTypes.cloudFirestore,
         assert(fsQuery != null),
         assert(forEachSnap != null),
@@ -143,6 +151,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     this.disableListener = false,
     this.onFirstFetchCatch,
     this.dbListen,
+    this.withoutNewItemsToList = false,
   })  : assert(!(dbQuery == null && dbReference == null)),
         assert(forEachJson != null),
         _type = FBTypes.realtimeDatabase,
@@ -244,13 +253,19 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     refresh(ViewState.asComplete);
   }
 
+  /// Add Firebase Database Real-time items.
+  Future<void> addFirebaseItems(_db.Event event) async {
+    addItems([
+      await forEachJson(event?.snapshot?.key,
+          Map<String, dynamic>.from(event?.snapshot?.value ?? {})),
+    ], orderBy: orderBy);
+  }
+
   Future<void> _updateRealtimeData(event) async {
     try {
-      addItems([
-        await forEachJson(event?.snapshot?.key,
-            Map<String, dynamic>.from(event?.snapshot?.value ?? {})),
-      ], orderBy: orderBy);
-      if (this.dbListen != null) this.dbListen(event);
+      if (!this.withoutNewItemsToList) await this.addFirebaseItems(event);
+
+      if (this.dbListen != null) await this.dbListen(this, event);
     } catch (err) {
       _printErr(err, isItem: true);
     }
@@ -287,27 +302,32 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     return query;
   }
 
+  /// Add new Firestore items to the logic list.
+  Future<void> addFirestoreItems(_fs.QuerySnapshot data) async {
+    addItems(
+        List<T>.from(
+            await Future.wait<T>(data.documentChanges.map((docChange) async {
+              try {
+                return await forEachSnap(docChange.document);
+              } catch (err) {
+                _printErr(err, isItem: true);
+                return null;
+              }
+            })),
+            growable: true),
+        orderBy: orderBy);
+  }
+
   Future<void> _cloudFirestoreListen() async {
     _cloudFirestoreSubscription =
         _firestoreQuery()?.snapshots()?.listen((data) async {
       try {
-        addItems(
-            List<T>.from(
-                await Future.wait<T>(
-                    data.documentChanges.map((docChange) async {
-                  try {
-                    return await forEachSnap(docChange.document);
-                  } catch (err) {
-                    _printErr(err, isItem: true);
-                    return null;
-                  }
-                })),
-                growable: true),
-            orderBy: orderBy);
+        if (!this.withoutNewItemsToList) await this.addFirestoreItems(data);
+
         _lastSnap = data.documentChanges.last.document;
+        if (this.fsListen != null) await this.fsListen(this, data);
         _status(true);
         refresh(ViewState.asComplete);
-        if (this.fsListen != null) this.fsListen(data);
       } catch (err) {
         _printErr(err, isItem: false);
       }

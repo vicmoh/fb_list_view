@@ -1,3 +1,8 @@
+## [0.0.15] - 10/19/20
+
+* added withoutNewItemToTheList. 
+* Breaking changes [fsListen] and [dbListen].
+
 ## [0.0.14] - 10/19/20
 
 * Fixed Firebase Database Real-time
