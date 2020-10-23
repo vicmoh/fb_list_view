@@ -16,6 +16,9 @@ enum _Type { realtimeDatabase, cloudFirestore }
 class FBListView<T extends Model> extends StatefulWidget {
   /* ----------------------------- Widget setting ----------------------------- */
 
+  /// Sort based on [orderBy] after items are added.
+  final bool presortOnItemsAdded;
+
   /// With this is true, all new data
   /// that is streamed and listend from
   /// the database not be added to the item list.
@@ -194,6 +197,7 @@ class FBListView<T extends Model> extends StatefulWidget {
     this.onFirstFetchCatch,
     this.fsListen,
     this.withoutNewItemsToList = false,
+    this.presortOnItemsAdded = false,
   })  : _type = _Type.cloudFirestore,
         assert(!(builder == null)),
         assert(fsQuery != null),
@@ -235,6 +239,7 @@ class FBListView<T extends Model> extends StatefulWidget {
     this.onFirstFetchCatch,
     this.dbListen,
     this.withoutNewItemsToList = false,
+    this.presortOnItemsAdded = false,
   })  : assert(!(dbQuery == null && dbReference == null)),
         assert(!(builder == null)),
         assert(forEachJson != null),
@@ -294,6 +299,7 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
     _isFirstTimeLoading = true;
     if (this.widget._type == _Type.cloudFirestore)
       _logic = FBListViewLogic<T>.cloudFirestore(
+          presortOnItemsAdded: widget.presortOnItemsAdded,
           withoutNewItemsToList: widget.withoutNewItemsToList,
           fsListen: widget.fsListen,
           onFirstFetchCatch: widget.onFirstFetchCatch,
@@ -311,6 +317,7 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
           refresher: this.widget.refresher);
     else if (this.widget._type == _Type.realtimeDatabase)
       _logic = FBListViewLogic<T>.realtimeDatabase(
+          presortOnItemsAdded: widget.presortOnItemsAdded,
           withoutNewItemsToList: widget.withoutNewItemsToList,
           dbListen: widget.dbListen,
           onFirstFetchCatch: widget.onFirstFetchCatch,

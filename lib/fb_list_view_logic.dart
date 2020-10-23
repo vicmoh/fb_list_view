@@ -20,6 +20,9 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     with UniquifyListModel<T> {
   /* ---------------------------------- Logic --------------------------------- */
 
+  /// Sort based on [orderBy] after items are added.
+  final bool presortOnItemsAdded;
+
   /// With this is true, all new data
   /// that is streamed and listend from
   /// the database not be added to the item list.
@@ -127,6 +130,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     this.onFirstFetchCatch,
     this.fsListen,
     this.withoutNewItemsToList = false,
+    this.presortOnItemsAdded = false,
   })  : _type = FBTypes.cloudFirestore,
         assert(fsQuery != null),
         assert(forEachSnap != null),
@@ -152,6 +156,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     this.onFirstFetchCatch,
     this.dbListen,
     this.withoutNewItemsToList = false,
+    this.presortOnItemsAdded = false,
   })  : assert(!(dbQuery == null && dbReference == null)),
         assert(forEachJson != null),
         _type = FBTypes.realtimeDatabase,
@@ -165,6 +170,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
   @override
   void initState() {
     super.initState();
+    this.init(orderBy: orderBy, presortOnItemsAdded: presortOnItemsAdded);
     _status(false);
     _refreshController = RefreshController();
 
@@ -236,9 +242,9 @@ class FBListViewLogic<T extends Model> extends ViewLogic
   Future<void> onRefresh() async {
     refresh(ViewState.asLoading);
     if (_type == FBTypes.cloudFirestore)
-      replaceItems(await _firestoreFetch(), orderBy: orderBy);
+      replaceItems(await _firestoreFetch());
     else if (_type == FBTypes.realtimeDatabase)
-      replaceItems(await _realtimeDatabaseFetch(), orderBy: orderBy);
+      replaceItems(await _realtimeDatabaseFetch());
     refresh(ViewState.asComplete);
   }
 
@@ -246,10 +252,11 @@ class FBListViewLogic<T extends Model> extends ViewLogic
   /// This is usually assigned on the
   /// SmartRefresher onLoading.
   Future<void> onLoading() async {
-    if (_type == FBTypes.cloudFirestore)
-      addItems(await _firestoreFetch(isNext: true), orderBy: orderBy);
-    else if (_type == FBTypes.realtimeDatabase)
-      addItems(await _realtimeDatabaseFetch(isNext: true), orderBy: orderBy);
+    if (_type == FBTypes.cloudFirestore) {
+      addItems(await _firestoreFetch(isNext: true));
+    } else if (_type == FBTypes.realtimeDatabase) {
+      addItems(await _realtimeDatabaseFetch(isNext: true));
+    }
     refresh(ViewState.asComplete);
   }
 
@@ -258,7 +265,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     addItems([
       await forEachJson(event?.snapshot?.key,
           Map<String, dynamic>.from(event?.snapshot?.value ?? {})),
-    ], orderBy: orderBy);
+    ]);
   }
 
   Future<void> _updateRealtimeData(event) async {
@@ -304,18 +311,16 @@ class FBListViewLogic<T extends Model> extends ViewLogic
 
   /// Add new Firestore items to the logic list.
   Future<void> addFirestoreItems(_fs.QuerySnapshot data) async {
-    addItems(
-        List<T>.from(
-            await Future.wait<T>(data.documentChanges.map((docChange) async {
-              try {
-                return await forEachSnap(docChange.document);
-              } catch (err) {
-                _printErr(err, isItem: true);
-                return null;
-              }
-            })),
-            growable: true),
-        orderBy: orderBy);
+    addItems(List<T>.from(
+        await Future.wait<T>(data.documentChanges.map((docChange) async {
+          try {
+            return await forEachSnap(docChange.document);
+          } catch (err) {
+            _printErr(err, isItem: true);
+            return null;
+          }
+        })),
+        growable: true));
   }
 
   Future<void> _cloudFirestoreListen() async {

@@ -29,12 +29,12 @@ dev_dependencies:
   provider_skeleton:
     git:
       url: git://github.com/vicmoh/provider_skeleton.git
-      ref: v0.0.18
+      ref: v0.0.20
 
   dart_util:
     git:
       url: git://github.com/vicmoh/dart_util.git
-      ref: v0.0.7
+      ref: v0.0.11
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
