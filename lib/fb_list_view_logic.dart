@@ -20,11 +20,18 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     with UniquifyListModel<T> {
   /* ---------------------------------- Logic --------------------------------- */
 
+  /// Determine if it is a manual fetch.
+  /// If this is true, you can call [initFetch]
+  /// to fetch the first fetch.
+  /// if this is false it will fetch on first instantiation
+  /// of the logic.
+  final bool isManualFetch;
+
   /// Sort based on [orderBy] after items are added.
   final bool presortOnItemsAdded;
 
   /// With this is true, all new data
-  /// that is streamed and listend from
+  /// that is streamed and listened from
   /// the database not be added to the item list.
   /// You can use the [fsListen] or [dbListen]
   /// to get the item.
@@ -131,6 +138,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     this.fsListen,
     this.withoutNewItemsToList = false,
     this.presortOnItemsAdded = false,
+    this.isManualFetch = false,
   })  : _type = FBTypes.cloudFirestore,
         assert(fsQuery != null),
         assert(forEachSnap != null),
@@ -157,6 +165,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     this.dbListen,
     this.withoutNewItemsToList = false,
     this.presortOnItemsAdded = false,
+    this.isManualFetch = false,
   })  : assert(!(dbQuery == null && dbReference == null)),
         assert(forEachJson != null),
         _type = FBTypes.realtimeDatabase,
@@ -174,9 +183,13 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     _status(false);
     _refreshController = RefreshController();
 
+    if (!this.isManualFetch) initFetch();
+  }
+
+  Future<void> initFetch() async {
     /// Set status as loading.
     refresh(ViewState.asLoading);
-    Future.microtask(
+    await Future.microtask(
         () => Future.delayed(Duration(milliseconds: fetchDelay)).then((_) {
               if (_type == FBTypes.cloudFirestore)
                 this.onRefresh().then((_) {
@@ -363,7 +376,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
       else
         _refreshController?.refreshToIdle();
     } catch (err) {
-      if (isNext) _refreshController?.loadNoData();
+      if (isNext) _refreshController?.loadComplete();
       if (onFetchCatch != null) onFetchCatch(err);
       _printErr(err);
     }
@@ -391,7 +404,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
       else
         _refreshController?.refreshToIdle();
     } catch (err) {
-      if (isNext) _refreshController?.loadNoData();
+      if (isNext) _refreshController?.loadComplete();
       if (onFetchCatch != null) onFetchCatch(err);
       _printErr(err);
     }

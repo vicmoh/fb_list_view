@@ -20,7 +20,7 @@ class FBListView<T extends Model> extends StatefulWidget {
   final bool presortOnItemsAdded;
 
   /// With this is true, all new data
-  /// that is streamed and listend from
+  /// that is streamed and listened from
   /// the database not be added to the item list.
   /// You can use the [fsListen] or [dbListen]
   /// to get the item.
