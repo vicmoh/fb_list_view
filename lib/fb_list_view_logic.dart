@@ -341,8 +341,6 @@ class FBListViewLogic<T extends Model> extends ViewLogic
         _firestoreQuery()?.snapshots()?.listen((data) async {
       try {
         if (!this.withoutNewItemsToList) await this.addFirestoreItems(data);
-
-        _lastSnap = data.documentChanges.last.document;
         if (this.fsListen != null) await this.fsListen(this, data);
         _status(true);
         refresh(ViewState.asComplete);
@@ -354,6 +352,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
 
   Future<List<T>> _realtimeDatabaseFetch({bool isNext = false}) async {
     List<T> data = [];
+
     try {
       var query = dbQuery ?? dbReference.orderByKey().limitToLast(this.limitBy);
       if (isNext)
@@ -371,26 +370,27 @@ class FBListViewLogic<T extends Model> extends ViewLogic
           return null;
         }
       }));
-      if (isNext)
-        _refreshController?.loadComplete();
-      else
-        _refreshController?.refreshToIdle();
     } catch (err) {
-      if (isNext) _refreshController?.loadComplete();
       if (onFetchCatch != null) onFetchCatch(err);
       _printErr(err);
     }
+
+    if (isNext)
+      _refreshController?.loadComplete();
+    else
+      _refreshController?.refreshCompleted();
     return data;
   }
 
   Future<List<T>> _firestoreFetch({bool isNext = false}) async {
     List<T> data = [];
     _fs.Query query = _firestoreQuery();
+
     try {
       if (isNext && _lastSnap != null)
         query = query.startAfterDocument(_lastSnap);
       var doc = await query.getDocuments();
-      _lastSnap = doc.documents.last;
+      _lastSnap = doc?.documents?.last;
       data = await Future.wait<T>(doc?.documents?.map((snap) async {
         try {
           return await forEachSnap(snap);
@@ -399,15 +399,15 @@ class FBListViewLogic<T extends Model> extends ViewLogic
           return null;
         }
       }));
-      if (isNext)
-        _refreshController?.loadComplete();
-      else
-        _refreshController?.refreshToIdle();
     } catch (err) {
-      if (isNext) _refreshController?.loadComplete();
       if (onFetchCatch != null) onFetchCatch(err);
       _printErr(err);
     }
+
+    if (isNext)
+      _refreshController?.loadComplete();
+    else
+      _refreshController?.refreshCompleted();
     return data;
   }
 
