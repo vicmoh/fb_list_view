@@ -186,6 +186,9 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     if (!this.isManualFetch) initFetch();
   }
 
+  /// Used when [isManualFetch] is true.
+  /// This will fetch the first data
+  /// when called.
   Future<void> initFetch() async {
     /// Set status as loading.
     refresh(ViewState.asLoading);
