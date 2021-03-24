@@ -1,3 +1,9 @@
+## [0.0.17] - 3/23/21
+
+* Added [infinite_scroll_pagination] implementation.
+* You can now use with in combination 
+with the [infinite_scroll_pagination] library.
+
 ## [0.0.16] - 3/8/21
 
 * Update the pull to refresh dependency. 
