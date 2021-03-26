@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart' as _fs;
 import 'package:firebase_database/firebase_database.dart' as _db;
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:dart_util/dart_util.dart';
+import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 
 /// Firebase type.
 enum FBTypes {
@@ -183,6 +184,10 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     _status(false);
     _refreshController = RefreshController();
 
+    /// Fetch initialization if user is using infinite scroll pagination.
+    _pagingController?.addPageRequestListener((pageKey) {
+      if (_isFirstFetchCompleted) _fetchPage();
+    });
     if (!this.isManualFetch) initFetch();
   }
 
@@ -219,6 +224,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
 
   @override
   void dispose() {
+    _pagingController?.dispose();
     _cloudFirestoreSubscription?.cancel();
     _realtimeDatabaseSubscriptionOnAdded?.cancel();
     _realtimeDatabaseSubscriptionOnChanged?.cancel();
@@ -229,6 +235,13 @@ class FBListViewLogic<T extends Model> extends ViewLogic
   /* -------------------------------------------------------------------------- */
   /*                              Private variable                              */
   /* -------------------------------------------------------------------------- */
+
+  /// Paging controller for the list pagination alternative.
+  /// This if user wants to use the infinite scroll pagination
+  /// package.
+  PagingController<int, T> get pagingController => _pagingController;
+  final PagingController<int, T> _pagingController =
+      PagingController(firstPageKey: 0);
 
   /// The refresh controller for smart refresher.
   RefreshController get refreshController => _refreshController;
@@ -254,13 +267,42 @@ class FBListViewLogic<T extends Model> extends ViewLogic
   ///The default limit value.
   static const REMOVE_LIMIT_MESSAGE = 'REMOVE LIMIT ON FIRESTORE QUERY!';
 
+  @override
+  void addItems(List<T> data) {
+    super.addItems(data);
+    _pagingController.itemList = this.items;
+    _pagingController.appendPage([], this.items.length);
+  }
+
+  @override
+  void replaceItems(List<T> data) {
+    super.replaceItems(data);
+    _pagingController.itemList = this.items;
+    _pagingController.appendPage([], this.items.length);
+  }
+
+  /// Fetch page for the infinite page scroll
+  /// pagination library.
+  Future<void> _fetchPage() async {
+    try {
+      final isLastPage = this.items.length == 0;
+      if (isLastPage && !_isFirstFetchCompleted) {
+        await this.onRefresh();
+      } else {
+        await this.onLoading();
+      }
+    } catch (error) {
+      _pagingController?.error = error;
+    }
+  }
+
   /// On First time load.
   Future<void> onRefresh() async {
     refresh(ViewState.asLoading);
     if (_type == FBTypes.cloudFirestore)
-      replaceItems(await _firestoreFetch());
+      this.replaceItems(await _firestoreFetch());
     else if (_type == FBTypes.realtimeDatabase)
-      replaceItems(await _realtimeDatabaseFetch());
+      this.replaceItems(await _realtimeDatabaseFetch());
     refresh(ViewState.asComplete);
   }
 
@@ -269,16 +311,16 @@ class FBListViewLogic<T extends Model> extends ViewLogic
   /// SmartRefresher onLoading.
   Future<void> onLoading() async {
     if (_type == FBTypes.cloudFirestore) {
-      addItems(await _firestoreFetch(isNext: true));
+      this.addItems(await _firestoreFetch(isNext: true));
     } else if (_type == FBTypes.realtimeDatabase) {
-      addItems(await _realtimeDatabaseFetch(isNext: true));
+      this.addItems(await _realtimeDatabaseFetch(isNext: true));
     }
     refresh(ViewState.asComplete);
   }
 
   /// Add Firebase Database Real-time items.
   Future<void> addFirebaseItems(_db.Event event) async {
-    addItems([
+    this.addItems([
       await forEachJson(event?.snapshot?.key,
           Map<String, dynamic>.from(event?.snapshot?.value ?? {})),
     ]);
@@ -327,7 +369,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
 
   /// Add new Firestore items to the logic list.
   Future<void> addFirestoreItems(_fs.QuerySnapshot data) async {
-    addItems(List<T>.from(
+    this.addItems(List<T>.from(
         await Future.wait<T>(data.documentChanges.map((docChange) async {
           try {
             return await forEachSnap(docChange.document);
