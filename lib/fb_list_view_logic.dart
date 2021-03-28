@@ -342,6 +342,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
         (dbReference?.limitToLast(1) ?? dbQuery)
             ?.onChildAdded
             ?.listen((event) async {
+      if (super.isDisposed) return;
       await _updateRealtimeData(event);
     });
 
@@ -349,6 +350,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
         (dbReference?.limitToLast(1) ?? dbQuery)
             ?.onChildChanged
             ?.listen((event) async {
+      if (super.isDisposed) return;
       await _updateRealtimeData(event);
     });
   }
@@ -385,6 +387,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     _cloudFirestoreSubscription =
         _firestoreQuery()?.snapshots()?.listen((data) async {
       try {
+        if (super.isDisposed) return;
         if (!this.withoutNewItemsToList) await this.addFirestoreItems(data);
         if (this.fsListen != null) await this.fsListen(this, data);
         _status(true);

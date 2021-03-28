@@ -261,7 +261,7 @@ packages:
     description:
       path: "."
       ref: "v0.0.22"
-      resolved-ref: a0963070399afaf0b7cc69161359861ed30cf401
+      resolved-ref: e9d5bb839d10ae075512d8c6fd415f0472055e1a
       url: "git://github.com/vicmoh/provider_skeleton.git"
     source: git
     version: "0.0.21"
