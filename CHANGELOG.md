@@ -1,3 +1,7 @@
+## [0.0.18] - 10/12/21
+
+- Update to null-safety
+
 ## [0.0.17] - 3/23/21
 
 - Added [infinite_scroll_pagination] implementation.
