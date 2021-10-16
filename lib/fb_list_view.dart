@@ -131,7 +131,7 @@ class FBListView<T extends Model> extends StatefulWidget {
   /// When snap is received. For each data
   /// that that has been received should convert the
   /// snapshot into an object.
-  final Future<T> Function(_fs.DocumentSnapshot)? forEachSnap;
+  final Future<T?> Function(_fs.DocumentSnapshot)? forEachSnap;
 
   /* -------------------------------- Firebase -------------------------------- */
 
@@ -166,7 +166,7 @@ class FBListView<T extends Model> extends StatefulWidget {
   /// When snap is received. For each data
   /// that that has been received should convert the
   /// snapshot into an object.
-  final Future<T> Function(String? id, Map<String, dynamic> json)? forEachJson;
+  final Future<T?> Function(String? id, Map<String, dynamic> json)? forEachJson;
 
   /* ------------------------------- Constructor ------------------------------ */
 

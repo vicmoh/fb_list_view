@@ -79,7 +79,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
   /// When snap is received. For each data
   /// that that has been received should convert the
   /// snapshot into an object.
-  final Future<T> Function(_fs.DocumentSnapshot)? forEachSnap;
+  final Future<T?> Function(_fs.DocumentSnapshot)? forEachSnap;
 
   /* -------------------------------- Firebase -------------------------------- */
 
@@ -114,7 +114,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
   /// When snap is received. For each data
   /// that that has been received should convert the
   /// snapshot into an object.
-  final Future<T> Function(String? id, Map<String, dynamic> json)? forEachJson;
+  final Future<T?> Function(String? id, Map<String, dynamic> json)? forEachJson;
 
   /// A call back that will the function to
   /// refresh the page.
