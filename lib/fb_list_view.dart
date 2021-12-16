@@ -1,12 +1,14 @@
-import 'dart:async';
+/// Export libraries.
+export 'package:fb_list_view/fb_list_view_logic.dart';
 
+/// Import libraries.
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:cloud_firestore/cloud_firestore.dart' as _fs;
 import 'package:firebase_database/firebase_database.dart' as _db;
 import 'package:provider_skeleton/provider_skeleton.dart';
-
-import './fb_list_view_logic.dart';
+import 'package:fb_list_view/fb_list_view_logic.dart';
 
 /// The list view type that can be used.
 enum _Type { realtimeDatabase, cloudFirestore }
@@ -27,17 +29,17 @@ class FBListView<T extends Model> extends StatefulWidget {
   final bool withoutNewItemsToList;
 
   /// Get Firebase list view logic from callback.
-  final Function(FBListViewLogic<T>) getLogic;
+  final Function(FBListViewLogic<T>?)? getLogic;
 
   /// Widget of when the list is empty.
   /// This widget is placed outside the widget
   /// in  comparison to [onEmptyList].
-  final Widget onEmptyWidget;
+  final Widget? onEmptyWidget;
 
   /// Widget of when the list is empty.
   /// This widget will be placed inside the list view
   /// in comparison to [onEmptyWidget]
-  final Widget onEmptyList;
+  final Widget? onEmptyList;
 
   /// The widget builder of each tile in the list.
   /// The builder callbacks the index and the model.
@@ -47,10 +49,10 @@ class FBListView<T extends Model> extends StatefulWidget {
   final bool isReverse;
 
   /// Inner padding of the list view.
-  final EdgeInsetsGeometry padding;
+  final EdgeInsetsGeometry? padding;
 
   /// Loader.
-  final Widget loaderWidget;
+  final Widget? loaderWidget;
 
   /// Determine whether to always show
   /// [loaderWidget] on refresh.
@@ -59,7 +61,7 @@ class FBListView<T extends Model> extends StatefulWidget {
   final bool alwaysShowLoader;
 
   /// The list view scroll controller.
-  final ScrollController controller;
+  final ScrollController? controller;
 
   /// Fetch delay on initialize state in milliseconds.
   final int fetchDelay;
@@ -76,29 +78,29 @@ class FBListView<T extends Model> extends StatefulWidget {
 
   /// A call back that will the function to
   /// refresh the page.
-  final Function(Future<void> Function()) refresher;
+  final Function(Future<void> Function())? refresher;
 
   /// The header widget when refreshing.
-  final Widget headerWidget;
+  final Widget? headerWidget;
 
   /// The footer widget when on paginate load.
-  final Widget footerWidget;
+  final Widget? footerWidget;
 
   /// Create with sliver list. Callback the
   /// the sliver widget list version.
   /// This callback must return list of sliver widgets.
-  final List<Widget> Function(Widget sliverList) slivers;
+  final List<Widget> Function(Widget sliverList)? slivers;
 
   /// Function callback to determine if the logic
   /// is currently fetching.
   /// Callback false if fetching, and true if complete.
-  final Function(bool) onFirstFetchStatus;
+  final Function(bool)? onFirstFetchStatus;
 
   /// On first fetch error catch.
-  final Function(dynamic) onFirstFetchCatch;
+  final Function(dynamic)? onFirstFetchCatch;
 
   /// The scroll physics of the list view.
-  final ScrollPhysics scrollPhysics;
+  final ScrollPhysics? scrollPhysics;
 
   /// The viewport at which the widget will be cached.
   final double cacheExtent;
@@ -112,29 +114,29 @@ class FBListView<T extends Model> extends StatefulWidget {
   final _Type _type;
 
   /// Compare function to order the list.
-  final int Function(T, T) orderBy;
+  final int Function(T?, T?)? orderBy;
 
   /// On error on fetching, all catches
   /// when fetching will be on this callback.
-  final Function(dynamic) onFetchCatch;
+  final Function(dynamic)? onFetchCatch;
 
   /* -------------------------------- Firestore ------------------------------- */
 
   /// Listen to new data on Firestore.
-  final Future<void> Function(FBListViewLogic<T>, _fs.QuerySnapshot) fsListen;
+  final Future<void> Function(FBListViewLogic<T>, _fs.QuerySnapshot)? fsListen;
 
   /// Firestore query.
-  final _fs.Query fsQuery;
+  final _fs.Query<Object>? fsQuery;
 
   /// When snap is received. For each data
   /// that that has been received should convert the
   /// snapshot into an object.
-  final Future<T> Function(_fs.DocumentSnapshot) forEachSnap;
+  final Future<T?> Function(_fs.DocumentSnapshot)? forEachSnap;
 
   /* -------------------------------- Firebase -------------------------------- */
 
   /// Listen to new data on Firebase database.
-  final Future<void> Function(FBListViewLogic<T>, _db.Event) dbListen;
+  final Future<void> Function(FBListViewLogic<T>, _db.Event)? dbListen;
 
   /// Used for pagination. For example when
   /// ordering by timestamp in firebase real time
@@ -146,11 +148,11 @@ class FBListView<T extends Model> extends StatefulWidget {
   /// onNextQuery: (query, items) =>
   ///             query.endAt(items.last.timestamp.millisecondsSinceEpoch - 1)
   /// ```
-  final _db.Query Function(_db.Query, List<T> items) onNextQuery;
+  final _db.Query Function(_db.Query, List<T?> items)? onNextQuery;
 
   /// Query for the list view, you can
   /// also used reference.
-  final _db.Query dbQuery;
+  final _db.Query? dbQuery;
 
   /// You can use database reference where
   /// it will will create query limit of 30
@@ -159,20 +161,20 @@ class FBListView<T extends Model> extends StatefulWidget {
   /// exist it will use that instead. If this
   /// is not null it will to listen new
   /// data.
-  final _db.DatabaseReference dbReference;
+  final _db.DatabaseReference? dbReference;
 
   /// When snap is received. For each data
   /// that that has been received should convert the
   /// snapshot into an object.
-  final Future<T> Function(String id, Map<String, dynamic> json) forEachJson;
+  final Future<T?> Function(String? id, Map<String, dynamic> json)? forEachJson;
 
   /* ------------------------------- Constructor ------------------------------ */
 
   /// List view for Firestore.
   FBListView.cloudFirestore({
-    @required this.fsQuery,
-    @required this.builder,
-    @required this.forEachSnap,
+    required _fs.Query<Object> this.fsQuery,
+    required this.builder,
+    required this.forEachSnap,
     this.onFetchCatch,
     this.orderBy,
     this.onEmptyWidget,
@@ -199,8 +201,6 @@ class FBListView<T extends Model> extends StatefulWidget {
     this.withoutNewItemsToList = false,
     this.presortOnItemsAdded = false,
   })  : _type = _Type.cloudFirestore,
-        assert(!(builder == null)),
-        assert(fsQuery != null),
         assert(forEachSnap != null),
         this.dbQuery = null,
         this.forEachJson = null,
@@ -210,8 +210,8 @@ class FBListView<T extends Model> extends StatefulWidget {
 
   /// List view for Firebase DB
   FBListView.realtimeDatabase({
-    @required this.builder,
-    @required this.forEachJson,
+    required this.builder,
+    required this.forEachJson,
     this.dbQuery,
     this.dbReference,
     this.onEmptyWidget,
@@ -241,7 +241,6 @@ class FBListView<T extends Model> extends StatefulWidget {
     this.withoutNewItemsToList = false,
     this.presortOnItemsAdded = false,
   })  : assert(!(dbQuery == null && dbReference == null)),
-        assert(!(builder == null)),
         assert(forEachJson != null),
         _type = _Type.realtimeDatabase,
         this.fsQuery = null,
@@ -281,7 +280,7 @@ class FBListView<T extends Model> extends StatefulWidget {
 }
 
 class _FBListViewState<T extends Model> extends State<FBListView<T>> {
-  FBListViewLogic<T> _logic;
+  FBListViewLogic<T>? _logic;
   bool _isFirstTimeLoading = true;
 
   @override
@@ -307,10 +306,10 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
           onFirstFetchStatus: (status) {
             setState(() => _isFirstTimeLoading = !status);
             if (this.widget.onFirstFetchStatus != null)
-              this.widget.onFirstFetchStatus(status);
+              this.widget.onFirstFetchStatus!(status);
           },
-          fsQuery: this.widget.fsQuery,
-          forEachSnap: this.widget.forEachSnap,
+          fsQuery: this.widget.fsQuery!,
+          forEachSnap: this.widget.forEachSnap!,
           fetchDelay: this.widget.fetchDelay,
           onFetchCatch: this.widget.onFetchCatch,
           orderBy: this.widget.orderBy,
@@ -326,17 +325,17 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
           onFirstFetchStatus: (status) {
             setState(() => _isFirstTimeLoading = !status);
             if (this.widget.onFirstFetchStatus != null)
-              this.widget.onFirstFetchStatus(status);
+              this.widget.onFirstFetchStatus!(status);
           },
           dbReference: this.widget.dbReference,
           dbQuery: this.widget.dbQuery,
-          forEachJson: this.widget.forEachJson,
+          forEachJson: this.widget.forEachJson!,
           fetchDelay: this.widget.fetchDelay,
           onFetchCatch: this.widget.onFetchCatch,
           orderBy: this.widget.orderBy,
           refresher: this.widget.refresher);
 
-    if (widget.getLogic != null) widget.getLogic(_logic);
+    if (widget.getLogic != null) widget.getLogic!(_logic);
   }
 
   @override
@@ -351,7 +350,7 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
       return this.widget.onEmptyWidget ?? Container();
     return SmartRefresher(
         reverse: this.widget.isReverse,
-        controller: model.refreshController,
+        controller: model.refreshController!,
         enablePullDown: this.widget.isReverse ? false : true,
         enablePullUp: true,
         cacheExtent: widget.cacheExtent,
@@ -371,7 +370,7 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
       CustomScrollView(controller: this.widget.controller, slivers: child);
 
   _sliverList(List<T> items) => SliverPadding(
-      padding: this.widget.padding,
+      padding: this.widget.padding!,
       sliver: SliverList(
           delegate: SliverChildBuilderDelegate(
               (context, index) => this.widget.builder(items, index),
@@ -384,7 +383,7 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
       itemCount: items.length,
       itemBuilder: (context, index) => this.widget.builder(items, index));
 
-  _listViewContent(List<T> items, {@required bool isLoading}) {
+  _listViewContent(List<T> items, {required bool isLoading}) {
     if ((this.widget.loaderWidget != null &&
             this.widget.alwaysShowLoader &&
             isLoading) ||
@@ -392,7 +391,7 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
     if (this.widget.debugEmptyList) return this.widget.onEmptyList;
     if (items.length == 0) return this.widget.onEmptyList ?? Container();
     if (this.widget.slivers != null)
-      return _sliver(this.widget.slivers(_sliverList(items)));
+      return _sliver(this.widget.slivers!(_sliverList(items)));
     return _listViewBuilder(items);
   }
 }
