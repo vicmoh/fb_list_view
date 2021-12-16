@@ -1,3 +1,7 @@
+## [0.0.19] - 10/12/21
+
+- Bug fixes, unused header parameter for For ListView widget.
+
 ## [0.0.18] - 10/12/21
 
 - Update to null-safety
