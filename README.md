@@ -3,12 +3,11 @@
 Firebase list view widget that will
 paginate and manage the list for you.
 
-# Installation 
+# Installation
 
 In `pubspec.yaml` import the dependency.
 This widget is dependent on `provider_skeleton`
 and `dart_util`. Copy paste the below:
-
 
 ```
 dependencies:
@@ -18,7 +17,7 @@ dependencies:
   fb_list_view:
     git:
       url: git://github.com/vicmoh/fb_list_view.git
-      ref: v0.0.15
+      ref: v0.0.19
 
   #------------------------------------------------------
   # below are package dependencies that FBListView needs.
@@ -45,5 +44,3 @@ dependencies:
   cloud_firestore: ^0.13.0+1
   firebase_storage: ^3.1.1
 ```
-
-
