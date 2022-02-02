@@ -74,7 +74,15 @@ class FBListViewLogic<T extends Model> extends ViewLogic
   final Future<void> Function(FBListViewLogic<T>, _fs.QuerySnapshot)? fsListen;
 
   /// Firestore query.
-  final _fs.Query<Object?>? fsQuery;
+  _fs.Query<Object?>? fsQuery;
+  void setFsQuery(_fs.Query<Object?>? query) {
+    assert(
+        fsQuery != null,
+        "fsQuery can only be re-initialize if you are using fsQuery in the first place." +
+            " Check if you are using fsQuery when you are first initializing it.");
+    if (query == null) return;
+    this.fsQuery = query;
+  }
 
   /// When snap is received. For each data
   /// that that has been received should convert the
@@ -100,7 +108,15 @@ class FBListViewLogic<T extends Model> extends ViewLogic
 
   /// Query for the list view, you can
   /// also used reference.
-  final _db.Query? dbQuery;
+  _db.Query? dbQuery;
+  void setDbQuery(_db.Query? query) {
+    assert(
+        dbQuery != null,
+        "dbQuery can only be re-initialize if you are using dbQuery in the first place." +
+            " Check if you are using dbQuery when you are first initializing it.");
+    if (query == null) return;
+    this.dbQuery = query;
+  }
 
   /// You can use database reference where
   /// it will will create query limit of 30

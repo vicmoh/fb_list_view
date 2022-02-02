@@ -1,16 +1,27 @@
 name: fb_list_view
 description: Firebase list view automatic pagination.
-version: 0.0.19
+version: 0.0.20
 homepage: https://github.com/vicmoh/fb_list_view
 
 environment:
-  sdk: '>=2.12.0 <3.0.0'
+  sdk: ">=2.12.0 <3.0.0"
 
 dependencies:
   flutter:
     sdk: flutter
 
 dev_dependencies:
+  # Dependencies
+  provider_skeleton:
+    git:
+      url: git://github.com/vicmoh/provider_skeleton.git
+      ref: v0.0.24
+
+  dart_util:
+    git:
+      url: git://github.com/vicmoh/dart_util.git
+      ref: v0.0.13
+
   # Widget for pagination
   pull_to_refresh: ^2.0.0
   infinite_scroll_pagination: ^3.1.0
@@ -25,16 +36,6 @@ dev_dependencies:
 
   flutter_test:
     sdk: flutter
-
-  provider_skeleton:
-    git:
-      url: git://github.com/vicmoh/provider_skeleton.git
-      ref: v0.0.24
-
-  dart_util:
-    git:
-      url: git://github.com/vicmoh/dart_util.git
-      ref: v0.0.13
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

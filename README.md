@@ -17,25 +17,26 @@ dependencies:
   fb_list_view:
     git:
       url: git://github.com/vicmoh/fb_list_view.git
-      ref: v0.0.19
+      ref: v0.0.20
 
   #------------------------------------------------------
   # below are package dependencies that FBListView needs.
   #------------------------------------------------------
 
+  # Dependencies
   provider_skeleton:
     git:
       url: git://github.com/vicmoh/provider_skeleton.git
-      ref: v0.0.24 # this version or higher.
+      ref: v0.0.24
 
   dart_util:
     git:
       url: git://github.com/vicmoh/dart_util.git
-      ref: v0.0.13 # this version or higher.
+      ref: v0.0.13
 
-  # Widget for pagination.
+  # Widget for pagination
   pull_to_refresh: ^2.0.0
-  infinite_scroll_pagination: ^3.1.8
+  infinite_scroll_pagination: ^3.1.0
 
   # Firebase
   firebase_auth: ^3.1.3

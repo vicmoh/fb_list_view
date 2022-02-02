@@ -1,3 +1,8 @@
+## [0.0.19] - 02/02/22
+
+- Added query setter, to be able to change
+  queries after declaration.
+
 ## [0.0.19] - 10/12/21
 
 - Bug fixes, unused header parameter for For ListView widget.
