@@ -105,7 +105,15 @@ class FBListView<T extends Model> extends StatefulWidget {
   /// The viewport at which the widget will be cached.
   final double cacheExtent;
 
+  /// Determine to disable loader widget if
+  /// items exist. Useful for showing cached items
+  /// instead of a loader on first initialization.
+  final bool skipLoaderIfItemExist;
+
   /* ---------------------------------- Logic --------------------------------- */
+
+  /// Disable the usage of concurrent fetch.
+  final bool disableConcurrentFetch;
 
   /// Disable live stream of new items.
   final bool disableListener;
@@ -200,6 +208,8 @@ class FBListView<T extends Model> extends StatefulWidget {
     this.fsListen,
     this.withoutNewItemsToList = false,
     this.presortOnItemsAdded = false,
+    this.disableConcurrentFetch = false,
+    this.skipLoaderIfItemExist = false,
   })  : _type = _Type.cloudFirestore,
         assert(forEachSnap != null),
         this.dbQuery = null,
@@ -240,6 +250,8 @@ class FBListView<T extends Model> extends StatefulWidget {
     this.dbListen,
     this.withoutNewItemsToList = false,
     this.presortOnItemsAdded = false,
+    this.disableConcurrentFetch = false,
+    this.skipLoaderIfItemExist = false,
   })  : assert(!(dbQuery == null && dbReference == null)),
         assert(forEachJson != null),
         _type = _Type.realtimeDatabase,
@@ -298,6 +310,7 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
     _isFirstTimeLoading = true;
     if (this.widget._type == _Type.cloudFirestore)
       _logic = FBListViewLogic<T>.cloudFirestore(
+          disableConcurrentFetch: widget.disableConcurrentFetch,
           presortOnItemsAdded: widget.presortOnItemsAdded,
           withoutNewItemsToList: widget.withoutNewItemsToList,
           fsListen: widget.fsListen,
@@ -316,6 +329,7 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
           refresher: this.widget.refresher);
     else if (this.widget._type == _Type.realtimeDatabase)
       _logic = FBListViewLogic<T>.realtimeDatabase(
+          disableConcurrentFetch: widget.disableConcurrentFetch,
           presortOnItemsAdded: widget.presortOnItemsAdded,
           withoutNewItemsToList: widget.withoutNewItemsToList,
           dbListen: widget.dbListen,
@@ -384,10 +398,13 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
       itemBuilder: (context, index) => this.widget.builder(items, index));
 
   _listViewContent(List<T> items, {required bool isLoading}) {
-    if ((this.widget.loaderWidget != null &&
-            this.widget.alwaysShowLoader &&
-            isLoading) ||
-        _isFirstTimeLoading) return this.widget.loaderWidget ?? Container();
+    if (!this.widget.skipLoaderIfItemExist &&
+        items.length == 0 &&
+        ((this.widget.loaderWidget != null &&
+                this.widget.alwaysShowLoader &&
+                isLoading) ||
+            _isFirstTimeLoading))
+      return this.widget.loaderWidget ?? Container();
     if (this.widget.debugEmptyList) return this.widget.onEmptyList;
     if (items.length == 0) return this.widget.onEmptyList ?? Container();
     if (this.widget.slivers != null)

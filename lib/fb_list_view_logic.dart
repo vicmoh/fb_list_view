@@ -68,6 +68,9 @@ class FBListViewLogic<T extends Model> extends ViewLogic
   /// Paginate 30 items.
   final int limitBy;
 
+  /// Disable the usage of concurrent fetch.
+  final bool disableConcurrentFetch;
+
   /* -------------------------------- Firestore ------------------------------- */
 
   /// Listen to new data on Firestore.
@@ -155,6 +158,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     this.withoutNewItemsToList = false,
     this.presortOnItemsAdded = false,
     this.isManualFetch = false,
+    this.disableConcurrentFetch = false,
   })  : _type = FBTypes.cloudFirestore,
         assert(forEachSnap != null),
         this.dbQuery = null,
@@ -181,6 +185,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     this.withoutNewItemsToList = false,
     this.presortOnItemsAdded = false,
     this.isManualFetch = false,
+    this.disableConcurrentFetch = false,
   })  : assert(!(dbQuery == null && dbReference == null)),
         assert(forEachJson != null),
         _type = FBTypes.realtimeDatabase,
@@ -385,16 +390,29 @@ class FBListViewLogic<T extends Model> extends ViewLogic
 
   /// Add new Firestore items to the logic list.
   Future<void> addFirestoreItems(_fs.QuerySnapshot data) async {
-    this.addItems(List<T>.from(
-        await Future.wait<T?>(data.docChanges.map((docChange) async {
-          try {
-            return await forEachSnap!(docChange.doc);
-          } catch (err) {
-            _printErr(err, isItem: true);
-            return null;
-          }
-        })),
-        growable: true));
+    if (!this.disableConcurrentFetch) {
+      this.addItems(List<T?>.from(
+          await Future.wait<T?>(data.docChanges.map((docChange) async {
+            try {
+              return await forEachSnap!(docChange.doc);
+            } catch (err) {
+              _printErr(err, isItem: true);
+              return null;
+            }
+          })),
+          growable: true));
+    } else {
+      final newItems = <T?>[];
+      for (final docChange in data.docChanges) {
+        try {
+          final item = await forEachSnap!(docChange.doc);
+          if (item != null) newItems.add(item);
+        } catch (err) {
+          _printErr(err, isItem: true);
+        }
+      }
+      this.addItems(newItems);
+    }
   }
 
   Future<void> _cloudFirestoreListen() async {
@@ -424,15 +442,28 @@ class FBListViewLogic<T extends Model> extends ViewLogic
             : query.endAt(getItems<T>().last!.id);
       var snap = await query.once();
       var jsonObj = Map<String, dynamic>.from(snap.value ?? {});
-      data = await Future.wait<T?>(jsonObj.entries.toList().map((each) async {
-        try {
-          return await forEachJson!(
-              each.key, Map<String, dynamic>.from(each.value ?? {}));
-        } catch (err) {
-          _printErr(err, isItem: true);
-          return null;
+
+      if (!this.disableConcurrentFetch) {
+        data = await Future.wait<T?>(jsonObj.entries.toList().map((each) async {
+          try {
+            return await forEachJson!(
+                each.key, Map<String, dynamic>.from(each.value ?? {}));
+          } catch (err) {
+            _printErr(err, isItem: true);
+            return null;
+          }
+        }));
+      } else {
+        for (final each in jsonObj.entries.toList()) {
+          try {
+            final item = await forEachJson!(
+                each.key, Map<String, dynamic>.from(each.value ?? {}));
+            if (item != null) data.add(item);
+          } catch (err) {
+            _printErr(err, isItem: true);
+          }
         }
-      }));
+      }
     } catch (err) {
       if (onFetchCatch != null) onFetchCatch!(err);
       _printErr(err);
