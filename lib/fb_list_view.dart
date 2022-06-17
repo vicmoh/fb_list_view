@@ -398,13 +398,23 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
       itemBuilder: (context, index) => this.widget.builder(items, index));
 
   _listViewContent(List<T> items, {required bool isLoading}) {
-    if (!this.widget.skipLoaderIfItemExist &&
-        items.length == 0 &&
-        ((this.widget.loaderWidget != null &&
-                this.widget.alwaysShowLoader &&
-                isLoading) ||
-            _isFirstTimeLoading))
+    /// Declare the edge cases.
+    final normLoading =
+        (widget.alwaysShowLoader && isLoading && items.isEmpty) ||
+            _isFirstTimeLoading;
+    final skipLoader =
+        widget.skipLoaderIfItemExist && items.isNotEmpty && !isLoading;
+
+    if (normLoading && !skipLoader)
       return this.widget.loaderWidget ?? Container();
+
+    // if (!this.widget.skipLoaderIfItemExist &&
+    //     items.length == 0 &&
+    //     ((this.widget.loaderWidget != null &&
+    //             this.widget.alwaysShowLoader &&
+    //             isLoading) ||
+    //         _isFirstTimeLoading))
+    //   return this.widget.loaderWidget ?? Container();
 
     if (this.widget.debugEmptyList) return this.widget.onEmptyList;
     if (/*!this.widget.skipLoaderIfItemExist &&*/ items.length == 0 &&
