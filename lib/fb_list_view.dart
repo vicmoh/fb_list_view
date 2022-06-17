@@ -407,8 +407,8 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
       return this.widget.loaderWidget ?? Container();
 
     if (this.widget.debugEmptyList) return this.widget.onEmptyList;
-    if (!this.widget.skipLoaderIfItemExist && items.length == 0 && !isLoading)
-      return this.widget.onEmptyList ?? Container();
+    if (/*!this.widget.skipLoaderIfItemExist &&*/ items.length == 0 &&
+        !isLoading) return this.widget.onEmptyList ?? Container();
 
     if (this.widget.slivers != null)
       return _sliver(this.widget.slivers!(_sliverList(items)));
