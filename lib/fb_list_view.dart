@@ -400,10 +400,8 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
   _listViewContent(List<T> items, {required bool isLoading}) {
     /// Declare the edge cases.
     final normLoading =
-        (widget.alwaysShowLoader && isLoading && items.isEmpty) ||
-            _isFirstTimeLoading;
-    final skipLoader =
-        widget.skipLoaderIfItemExist && items.isNotEmpty && !isLoading;
+        (widget.alwaysShowLoader && isLoading) || _isFirstTimeLoading;
+    final skipLoader = widget.skipLoaderIfItemExist && items.isNotEmpty;
 
     if (normLoading && !skipLoader)
       return this.widget.loaderWidget ?? Container();
