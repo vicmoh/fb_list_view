@@ -71,6 +71,9 @@ class FBListViewLogic<T extends Model> extends ViewLogic
   /// Disable the usage of concurrent fetch.
   final bool disableConcurrentFetch;
 
+  /// A function callback that pass parameter is first fetch.
+  final Future<void> Function(bool isFirstFetch)? whenRefresh;
+
   /* -------------------------------- Firestore ------------------------------- */
 
   /// Listen to new data on Firestore.
@@ -159,6 +162,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     this.presortOnItemsAdded = false,
     this.isManualFetch = false,
     this.disableConcurrentFetch = false,
+    this.whenRefresh,
   })  : _type = FBTypes.cloudFirestore,
         assert(forEachSnap != null),
         this.dbQuery = null,
@@ -186,6 +190,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     this.presortOnItemsAdded = false,
     this.isManualFetch = false,
     this.disableConcurrentFetch = false,
+    this.whenRefresh,
   })  : assert(!(dbQuery == null && dbReference == null)),
         assert(forEachJson != null),
         _type = FBTypes.realtimeDatabase,
@@ -322,6 +327,8 @@ class FBListViewLogic<T extends Model> extends ViewLogic
       this.replaceItems(await _firestoreFetch());
     else if (_type == FBTypes.realtimeDatabase)
       this.replaceItems(await _realtimeDatabaseFetch());
+
+    if (whenRefresh != null) await whenRefresh!(_isFirstFetchCompleted);
     refresh(ViewState.asComplete);
   }
 

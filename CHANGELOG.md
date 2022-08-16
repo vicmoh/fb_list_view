@@ -1,4 +1,9 @@
-## [0.0.19] - 02/02/22
+## [0.0.22] - 08/16/22
+
+- Added on refresh callback
+  so that you can add functionality during refresh.
+
+## [0.0.21] - 02/02/22
 
 - Added query setter, to be able to change
   queries after declaration.
