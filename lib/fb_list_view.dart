@@ -94,10 +94,10 @@ class FBListView<T extends Model> extends StatefulWidget {
   /// Function callback to determine if the logic
   /// is currently fetching.
   /// Callback false if fetching, and true if complete.
-  final Function(bool)? onFirstFetchStatus;
+  final Future<void> Function(bool)? onFirstFetchStatus;
 
   /// On first fetch error catch.
-  final Function(dynamic)? onFirstFetchCatch;
+  final Future<void> Function(dynamic)? onFirstFetchCatch;
 
   /// The scroll physics of the list view.
   final ScrollPhysics? scrollPhysics;
@@ -126,7 +126,7 @@ class FBListView<T extends Model> extends StatefulWidget {
 
   /// On error on fetching, all catches
   /// when fetching will be on this callback.
-  final Function(dynamic)? onFetchCatch;
+  final Future<void> Function(dynamic)? onFetchCatch;
 
   /* -------------------------------- Firestore ------------------------------- */
 
@@ -316,7 +316,7 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
           fsListen: widget.fsListen,
           onFirstFetchCatch: widget.onFirstFetchCatch,
           disableListener: widget.disableListener,
-          onFirstFetchStatus: (status) {
+          onFirstFetchStatus: (status) async {
             setState(() => _isFirstTimeLoading = !status);
             if (this.widget.onFirstFetchStatus != null)
               this.widget.onFirstFetchStatus!(status);
@@ -336,7 +336,7 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
           onFirstFetchCatch: widget.onFirstFetchCatch,
           disableListener: widget.disableListener,
           onNextQuery: this.widget.onNextQuery,
-          onFirstFetchStatus: (status) {
+          onFirstFetchStatus: (status) async {
             setState(() => _isFirstTimeLoading = !status);
             if (this.widget.onFirstFetchStatus != null)
               this.widget.onFirstFetchStatus!(status);

@@ -1,5 +1,8 @@
 ## [0.0.22] - 08/16/22
 
+- Breaking changes, onFirstFetchCatch, onFetchCatch, onFirstFetchStatus
+  needs to be updated to use the async functions.
+
 - Added on refresh callback
   so that you can add functionality during refresh.
 

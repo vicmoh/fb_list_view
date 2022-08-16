@@ -48,15 +48,15 @@ class FBListViewLogic<T extends Model> extends ViewLogic
 
   /// On error on fetching, all catches
   /// when fetching will be on this callback.
-  final Function(dynamic)? onFetchCatch;
+  final Future<void> Function(dynamic)? onFetchCatch;
 
   /// On first fetch error catch.
-  final Function(dynamic)? onFirstFetchCatch;
+  final Future<void> Function(dynamic)? onFirstFetchCatch;
 
   /// Function callback to determine if the logic
   /// is currently fetching.
   /// Callback false if fetching, and true if complete.
-  final Function(bool)? onFirstFetchStatus;
+  final Future<void> Function(bool)? onFirstFetchStatus;
 
   /// Fetch delay on initialize state in milliseconds.
   final int fetchDelay;
@@ -205,14 +205,14 @@ class FBListViewLogic<T extends Model> extends ViewLogic
   void initState() {
     super.initState();
     this.init(orderBy: orderBy, presortOnItemsAdded: presortOnItemsAdded);
-    _status(false);
     _refreshController = RefreshController();
+
+    if (!this.isManualFetch) initFetch();
 
     /// Fetch initialization if user is using infinite scroll pagination.
     _pagingController.addPageRequestListener((pageKey) {
       if (_isFirstFetchCompleted) _fetchPage();
     });
-    if (!this.isManualFetch) initFetch();
   }
 
   /// Used when [isManualFetch] is true.
@@ -221,25 +221,32 @@ class FBListViewLogic<T extends Model> extends ViewLogic
   Future<void> initFetch() async {
     /// Set status as loading.
     refresh(ViewState.asLoading);
-    await Future.microtask(
-        () => Future.delayed(Duration(milliseconds: fetchDelay)).then((_) {
-              if (_type == FBTypes.cloudFirestore)
-                this.onRefresh().then((_) {
-                  _status(true);
-                  if (!this.disableListener) _cloudFirestoreListen();
-                }).catchError((err) {
-                  if (this.onFirstFetchCatch != null) onFirstFetchCatch!(err);
-                });
-              else if (_type == FBTypes.realtimeDatabase)
-                this.onRefresh().then((_) {
-                  _status(true);
-                  if (!this.disableListener) _realtimeDatabaseListen();
-                }).catchError((err) {
-                  if (this.onFirstFetchCatch != null) onFirstFetchCatch!(err);
-                });
-            })).catchError((err) {
-      refresh(ViewState.asError);
-      onFetchCatch!(err);
+
+    await Future.microtask(() async {
+      try {
+        await Future.delayed(Duration(milliseconds: fetchDelay));
+
+        if (_type == FBTypes.cloudFirestore) {
+          try {
+            await this.onRefresh();
+            await _status(true);
+            if (!this.disableListener) _cloudFirestoreListen();
+          } catch (err) {
+            if (this.onFirstFetchCatch != null) await onFirstFetchCatch!(err);
+          }
+        } else if (_type == FBTypes.realtimeDatabase) {
+          try {
+            await this.onRefresh();
+            await _status(true);
+            if (!this.disableListener) _realtimeDatabaseListen();
+          } catch (err) {
+            if (this.onFirstFetchCatch != null) await onFirstFetchCatch!(err);
+          }
+        }
+      } catch (err) {
+        refresh(ViewState.asError);
+        await onFetchCatch!(err);
+      }
     });
 
     /// Callback refresher
@@ -273,9 +280,9 @@ class FBListViewLogic<T extends Model> extends ViewLogic
 
   /// Determine if the first fetch complete.
   bool _isFirstFetchCompleted = false;
-  void _status(bool val) {
+  Future<void> _status(bool val) async {
     _isFirstFetchCompleted = val;
-    if (this.onFirstFetchStatus != null) this.onFirstFetchStatus!(val);
+    if (this.onFirstFetchStatus != null) await this.onFirstFetchStatus!(val);
   }
 
   /// Keep track of snaps and subs
@@ -429,7 +436,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
         if (super.isDisposed) return;
         if (!this.withoutNewItemsToList) await this.addFirestoreItems(data);
         if (this.fsListen != null) await this.fsListen!(this, data);
-        _status(true);
+        await _status(true);
         refresh(ViewState.asComplete);
       } catch (err) {
         _printErr(err, isItem: false);
@@ -472,7 +479,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
         }
       }
     } catch (err) {
-      if (onFetchCatch != null) onFetchCatch!(err);
+      if (onFetchCatch != null) await onFetchCatch!(err);
       _printErr(err);
     }
 
@@ -501,7 +508,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
         }
       }));
     } catch (err) {
-      if (onFetchCatch != null) onFetchCatch!(err);
+      if (onFetchCatch != null) await onFetchCatch!(err);
       _printErr(err);
     }
 
