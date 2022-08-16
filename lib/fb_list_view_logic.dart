@@ -207,12 +207,17 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     this.init(orderBy: orderBy, presortOnItemsAdded: presortOnItemsAdded);
     _refreshController = RefreshController();
 
-    if (!this.isManualFetch) initFetch();
+    _status(false).then((_) {
+      _pagingController.addPageRequestListener((pageKey) {
+        if (_isFirstFetchCompleted) _fetchPage();
+      });
+
+      if (!this.isManualFetch) initFetch();
+    }).catchError((err) {
+      if (onFirstFetchCatch != null) onFirstFetchCatch!(err);
+    });
 
     /// Fetch initialization if user is using infinite scroll pagination.
-    _pagingController.addPageRequestListener((pageKey) {
-      if (_isFirstFetchCompleted) _fetchPage();
-    });
   }
 
   /// Used when [isManualFetch] is true.
