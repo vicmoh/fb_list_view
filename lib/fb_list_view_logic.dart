@@ -336,12 +336,12 @@ class FBListViewLogic<T extends Model> extends ViewLogic
   Future<void> onRefresh() async {
     refresh(ViewState.asLoading);
 
-    if (whenRefresh != null) await whenRefresh!(_isFirstFetchCompleted);
-
     if (_type == FBTypes.cloudFirestore)
       this.replaceItems(await _firestoreFetch());
     else if (_type == FBTypes.realtimeDatabase)
       this.replaceItems(await _realtimeDatabaseFetch());
+
+    if (whenRefresh != null) await whenRefresh!(_isFirstFetchCompleted);
 
     refresh(ViewState.asComplete);
   }
