@@ -98,7 +98,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
   /* -------------------------------- Firebase -------------------------------- */
 
   /// Listen to new data on Firebase database.
-  final Future<void> Function(FBListViewLogic<T>, _db.Event)? dbListen;
+  final Future<void> Function(FBListViewLogic<T>, _db.DatabaseEvent)? dbListen;
 
   /// Used for pagination. For example when
   /// ordering by timestamp in firebase real time
@@ -359,10 +359,12 @@ class FBListViewLogic<T extends Model> extends ViewLogic
   }
 
   /// Add Firebase Database Real-time items.
-  Future<void> addFirebaseItems(_db.Event event) async {
+  Future<void> addFirebaseItems(_db.DatabaseEvent event) async {
     this.addItems([
-      await forEachJson!(event.snapshot.key,
-          Map<String, dynamic>.from(event.snapshot.value ?? {})),
+      await forEachJson!(
+          event.snapshot.key,
+          Map<String, dynamic>.from(
+              event.snapshot.value as Map<String, dynamic>? ?? {})),
     ]);
   }
 
@@ -462,7 +464,8 @@ class FBListViewLogic<T extends Model> extends ViewLogic
             ? this.onNextQuery!(query, getItems<T>())
             : query.endAt(getItems<T>().last!.id);
       var snap = await query.once();
-      var jsonObj = Map<String, dynamic>.from(snap.value ?? {});
+      var jsonObj = Map<String, dynamic>.from(
+          snap.snapshot.value as Map<String, dynamic>? ?? {});
 
       if (!this.disableConcurrentFetch) {
         data = await Future.wait<T?>(jsonObj.entries.toList().map((each) async {

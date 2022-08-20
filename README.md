@@ -17,7 +17,7 @@ dependencies:
   fb_list_view:
     git:
       url: git://github.com/vicmoh/fb_list_view.git
-      ref: v0.0.22
+      ref: v0.0.23
 
   #------------------------------------------------------
   # below are package dependencies that FBListView needs.
@@ -40,9 +40,9 @@ dependencies:
 
   # Firebase
   firebase_auth: ^3.1.3
-  firebase_database: ^8.0.0
+  firebase_database: ^9.1.2
   firebase_core: ^1.7.0
   firebase_messaging: ^10.0.8
   cloud_firestore: ^2.5.3
-  firebase_storage: ^10.0.5
+  firebase_storage: ^10.3.1
 ```

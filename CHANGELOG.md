@@ -1,3 +1,8 @@
+## [0.0.23] - 08/20/22
+
+- Breaking changes update Firebase database 
+to version 9.1.2 and higher.
+
 ## [0.0.22] - 08/16/22
 
 - Breaking changes, onFirstFetchCatch, onFetchCatch, onFirstFetchStatus

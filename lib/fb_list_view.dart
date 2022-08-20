@@ -144,7 +144,7 @@ class FBListView<T extends Model> extends StatefulWidget {
   /* -------------------------------- Firebase -------------------------------- */
 
   /// Listen to new data on Firebase database.
-  final Future<void> Function(FBListViewLogic<T>, _db.Event)? dbListen;
+  final Future<void> Function(FBListViewLogic<T>, _db.DatabaseEvent)? dbListen;
 
   /// Used for pagination. For example when
   /// ordering by timestamp in firebase real time
