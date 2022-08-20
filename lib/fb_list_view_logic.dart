@@ -361,10 +361,8 @@ class FBListViewLogic<T extends Model> extends ViewLogic
   /// Add Firebase Database Real-time items.
   Future<void> addFirebaseItems(_db.DatabaseEvent event) async {
     this.addItems([
-      await forEachJson!(
-          event.snapshot.key,
-          Map<String, dynamic>.from(
-              event.snapshot.value as Map<String, dynamic>? ?? {})),
+      await forEachJson!(event.snapshot.key,
+          Map<String, dynamic>.from(event.snapshot.value as Map? ?? {})),
     ]);
   }
 
@@ -464,8 +462,8 @@ class FBListViewLogic<T extends Model> extends ViewLogic
             ? this.onNextQuery!(query, getItems<T>())
             : query.endAt(getItems<T>().last!.id);
       var snap = await query.once();
-      var jsonObj = Map<String, dynamic>.from(
-          snap.snapshot.value as Map<String, dynamic>? ?? {});
+      var jsonObj =
+          Map<String, dynamic>.from(snap.snapshot.value as Map? ?? {});
 
       if (!this.disableConcurrentFetch) {
         data = await Future.wait<T?>(jsonObj.entries.toList().map((each) async {
