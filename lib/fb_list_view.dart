@@ -187,6 +187,9 @@ class FBListView<T extends Model> extends StatefulWidget {
   /// been modified.
   final Future<List<T?>> Function(List<T?>)? itemsAfterFetch;
 
+  /// Paginate 30 items.
+  final int limitBy;
+
   /* ------------------------------- Constructor ------------------------------ */
 
   /// List view for Firestore.
@@ -222,6 +225,7 @@ class FBListView<T extends Model> extends StatefulWidget {
     this.disableConcurrentFetch = false,
     this.skipLoaderIfItemExist = false,
     this.itemsAfterFetch,
+    this.limitBy = 15,
   })  : _type = _Type.cloudFirestore,
         assert(forEachSnap != null),
         this.dbQuery = null,
@@ -265,6 +269,7 @@ class FBListView<T extends Model> extends StatefulWidget {
     this.disableConcurrentFetch = false,
     this.skipLoaderIfItemExist = false,
     this.itemsAfterFetch,
+    this.limitBy = 15,
   })  : assert(!(dbQuery == null && dbReference == null)),
         assert(forEachJson != null),
         _type = _Type.realtimeDatabase,
@@ -341,6 +346,7 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
         orderBy: this.widget.orderBy,
         refresher: this.widget.refresher,
         itemsAfterFetch: this.widget.itemsAfterFetch,
+        limitBy: this.widget.limitBy,
       );
     else if (this.widget._type == _Type.realtimeDatabase)
       _logic = FBListViewLogic<T>.realtimeDatabase(
@@ -364,6 +370,7 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
         orderBy: this.widget.orderBy,
         refresher: this.widget.refresher,
         itemsAfterFetch: this.widget.itemsAfterFetch,
+        limitBy: this.widget.limitBy,
       );
 
     if (widget.getLogic != null) widget.getLogic!(_logic);

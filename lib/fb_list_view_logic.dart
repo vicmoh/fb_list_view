@@ -164,8 +164,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     this.fetchDelay = 0,
     this.refresher,
     this.onFirstFetchStatus,
-    this.limitBy = 30,
-    this.numberOfFirstFetch = 30,
+    this.limitBy = 15,
     this.disableListener = false,
     this.onFirstFetchCatch,
     this.fsListen,
@@ -181,7 +180,8 @@ class FBListViewLogic<T extends Model> extends ViewLogic
         this.forEachJson = null,
         this.dbReference = null,
         this.onNextQuery = null,
-        this.dbListen = null;
+        this.dbListen = null,
+        this.numberOfFirstFetch = limitBy;
 
   /// List view for Firebase DB
   FBListViewLogic.realtimeDatabase({
@@ -193,7 +193,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     this.fetchDelay = 0,
     this.refresher,
     this.onFirstFetchStatus,
-    this.limitBy = 30,
+    this.limitBy = 15,
     this.onNextQuery,
     this.disableListener = false,
     this.onFirstFetchCatch,
