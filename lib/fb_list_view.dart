@@ -176,6 +176,17 @@ class FBListView<T extends Model> extends StatefulWidget {
   /// snapshot into an object.
   final Future<T?> Function(String? id, Map<String, dynamic> json)? forEachJson;
 
+  /// This function is used to aggregate
+  /// the list object, modify.
+  /// Can also be used for other things such
+  /// disk caching etc.
+  ///
+  /// Function callbacks the data which
+  /// then can be modified.
+  /// Return the new list object that has
+  /// been modified.
+  final Future<List<T?>> Function(List<T?>)? itemsAfterFetch;
+
   /* ------------------------------- Constructor ------------------------------ */
 
   /// List view for Firestore.
@@ -210,6 +221,7 @@ class FBListView<T extends Model> extends StatefulWidget {
     this.presortOnItemsAdded = false,
     this.disableConcurrentFetch = false,
     this.skipLoaderIfItemExist = false,
+    this.itemsAfterFetch,
   })  : _type = _Type.cloudFirestore,
         assert(forEachSnap != null),
         this.dbQuery = null,
@@ -252,6 +264,7 @@ class FBListView<T extends Model> extends StatefulWidget {
     this.presortOnItemsAdded = false,
     this.disableConcurrentFetch = false,
     this.skipLoaderIfItemExist = false,
+    this.itemsAfterFetch,
   })  : assert(!(dbQuery == null && dbReference == null)),
         assert(forEachJson != null),
         _type = _Type.realtimeDatabase,
@@ -310,44 +323,48 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
     _isFirstTimeLoading = true;
     if (this.widget._type == _Type.cloudFirestore)
       _logic = FBListViewLogic<T>.cloudFirestore(
-          disableConcurrentFetch: widget.disableConcurrentFetch,
-          presortOnItemsAdded: widget.presortOnItemsAdded,
-          withoutNewItemsToList: widget.withoutNewItemsToList,
-          fsListen: widget.fsListen,
-          onFirstFetchCatch: widget.onFirstFetchCatch,
-          disableListener: widget.disableListener,
-          onFirstFetchStatus: (status) async {
-            setState(() => _isFirstTimeLoading = !status);
-            if (this.widget.onFirstFetchStatus != null)
-              this.widget.onFirstFetchStatus!(status);
-          },
-          fsQuery: this.widget.fsQuery!,
-          forEachSnap: this.widget.forEachSnap!,
-          fetchDelay: this.widget.fetchDelay,
-          onFetchCatch: this.widget.onFetchCatch,
-          orderBy: this.widget.orderBy,
-          refresher: this.widget.refresher);
+        disableConcurrentFetch: widget.disableConcurrentFetch,
+        presortOnItemsAdded: widget.presortOnItemsAdded,
+        withoutNewItemsToList: widget.withoutNewItemsToList,
+        fsListen: widget.fsListen,
+        onFirstFetchCatch: widget.onFirstFetchCatch,
+        disableListener: widget.disableListener,
+        onFirstFetchStatus: (status) async {
+          setState(() => _isFirstTimeLoading = !status);
+          if (this.widget.onFirstFetchStatus != null)
+            this.widget.onFirstFetchStatus!(status);
+        },
+        fsQuery: this.widget.fsQuery!,
+        forEachSnap: this.widget.forEachSnap!,
+        fetchDelay: this.widget.fetchDelay,
+        onFetchCatch: this.widget.onFetchCatch,
+        orderBy: this.widget.orderBy,
+        refresher: this.widget.refresher,
+        itemsAfterFetch: this.widget.itemsAfterFetch,
+      );
     else if (this.widget._type == _Type.realtimeDatabase)
       _logic = FBListViewLogic<T>.realtimeDatabase(
-          disableConcurrentFetch: widget.disableConcurrentFetch,
-          presortOnItemsAdded: widget.presortOnItemsAdded,
-          withoutNewItemsToList: widget.withoutNewItemsToList,
-          dbListen: widget.dbListen,
-          onFirstFetchCatch: widget.onFirstFetchCatch,
-          disableListener: widget.disableListener,
-          onNextQuery: this.widget.onNextQuery,
-          onFirstFetchStatus: (status) async {
-            setState(() => _isFirstTimeLoading = !status);
-            if (this.widget.onFirstFetchStatus != null)
-              this.widget.onFirstFetchStatus!(status);
-          },
-          dbReference: this.widget.dbReference,
-          dbQuery: this.widget.dbQuery,
-          forEachJson: this.widget.forEachJson!,
-          fetchDelay: this.widget.fetchDelay,
-          onFetchCatch: this.widget.onFetchCatch,
-          orderBy: this.widget.orderBy,
-          refresher: this.widget.refresher);
+        disableConcurrentFetch: widget.disableConcurrentFetch,
+        presortOnItemsAdded: widget.presortOnItemsAdded,
+        withoutNewItemsToList: widget.withoutNewItemsToList,
+        dbListen: widget.dbListen,
+        onFirstFetchCatch: widget.onFirstFetchCatch,
+        disableListener: widget.disableListener,
+        onNextQuery: this.widget.onNextQuery,
+        onFirstFetchStatus: (status) async {
+          setState(() => _isFirstTimeLoading = !status);
+          if (this.widget.onFirstFetchStatus != null)
+            this.widget.onFirstFetchStatus!(status);
+        },
+        dbReference: this.widget.dbReference,
+        dbQuery: this.widget.dbQuery,
+        forEachJson: this.widget.forEachJson!,
+        fetchDelay: this.widget.fetchDelay,
+        onFetchCatch: this.widget.onFetchCatch,
+        orderBy: this.widget.orderBy,
+        refresher: this.widget.refresher,
+        itemsAfterFetch: this.widget.itemsAfterFetch,
+      );
 
     if (widget.getLogic != null) widget.getLogic!(_logic);
   }

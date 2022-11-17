@@ -74,6 +74,17 @@ class FBListViewLogic<T extends Model> extends ViewLogic
   /// A function callback that pass parameter is first fetch.
   final Future<void> Function(bool isFirstFetch)? whenRefresh;
 
+  /// This function is used to aggregate
+  /// the list object, modify.
+  /// Can also be used for other things such
+  /// disk caching etc.
+  ///
+  /// Function callbacks the data which
+  /// then can be modified.
+  /// Return the new list object that has
+  /// been modified.
+  final Future<List<T?>> Function(List<T?>)? itemsAfterFetch;
+
   /* -------------------------------- Firestore ------------------------------- */
 
   /// Listen to new data on Firestore.
@@ -163,6 +174,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     this.isManualFetch = false,
     this.disableConcurrentFetch = false,
     this.whenRefresh,
+    this.itemsAfterFetch,
   })  : _type = FBTypes.cloudFirestore,
         assert(forEachSnap != null),
         this.dbQuery = null,
@@ -191,6 +203,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
     this.isManualFetch = false,
     this.disableConcurrentFetch = false,
     this.whenRefresh,
+    this.itemsAfterFetch,
   })  : assert(!(dbQuery == null && dbReference == null)),
         assert(forEachJson != null),
         _type = FBTypes.realtimeDatabase,
@@ -360,10 +373,13 @@ class FBListViewLogic<T extends Model> extends ViewLogic
 
   /// Add Firebase Database Real-time items.
   Future<void> addFirebaseItems(_db.DatabaseEvent event) async {
-    this.addItems([
+    var newItems = [
       await forEachJson!(event.snapshot.key,
           Map<String, dynamic>.from(event.snapshot.value as Map? ?? {})),
-    ]);
+    ];
+
+    if (itemsAfterFetch != null) newItems = await itemsAfterFetch!(newItems);
+    this.addItems(newItems);
   }
 
   Future<void> _updateRealtimeData(event) async {
@@ -412,7 +428,7 @@ class FBListViewLogic<T extends Model> extends ViewLogic
   /// Add new Firestore items to the logic list.
   Future<void> addFirestoreItems(_fs.QuerySnapshot data) async {
     if (!this.disableConcurrentFetch) {
-      this.addItems(List<T?>.from(
+      var newItems = List<T?>.from(
           await Future.wait<T?>(data.docChanges.map((docChange) async {
             try {
               return await forEachSnap!(docChange.doc);
@@ -421,9 +437,12 @@ class FBListViewLogic<T extends Model> extends ViewLogic
               return null;
             }
           })),
-          growable: true));
+          growable: true);
+
+      if (itemsAfterFetch != null) newItems = await itemsAfterFetch!(newItems);
+      this.addItems(newItems);
     } else {
-      final newItems = <T?>[];
+      var newItems = <T?>[];
       for (final docChange in data.docChanges) {
         try {
           final item = await forEachSnap!(docChange.doc);
@@ -432,6 +451,8 @@ class FBListViewLogic<T extends Model> extends ViewLogic
           _printErr(err, isItem: true);
         }
       }
+
+      if (itemsAfterFetch != null) newItems = await itemsAfterFetch!(newItems);
       this.addItems(newItems);
     }
   }
@@ -491,10 +512,13 @@ class FBListViewLogic<T extends Model> extends ViewLogic
       _printErr(err);
     }
 
+    if (itemsAfterFetch != null) data = await itemsAfterFetch!(data);
+
     if (isNext)
       _refreshController?.loadComplete();
     else
       _refreshController?.refreshCompleted();
+
     return data;
   }
 
@@ -519,6 +543,8 @@ class FBListViewLogic<T extends Model> extends ViewLogic
       if (onFetchCatch != null) await onFetchCatch!(err);
       _printErr(err);
     }
+
+    if (itemsAfterFetch != null) data = await itemsAfterFetch!(data);
 
     if (isNext)
       _refreshController?.loadComplete();
