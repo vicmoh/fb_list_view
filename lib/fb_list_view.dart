@@ -190,6 +190,9 @@ class FBListView<T extends Model> extends StatefulWidget {
   /// Paginate 30 items.
   final int limitBy;
 
+  final Widget Function(FBListViewLogic<T>? logic, Widget child)?
+      wrappedBuilder;
+
   /* ------------------------------- Constructor ------------------------------ */
 
   /// List view for Firestore.
@@ -226,6 +229,7 @@ class FBListView<T extends Model> extends StatefulWidget {
     this.skipLoaderIfItemExist = false,
     this.itemsAfterFetch,
     this.limitBy = 15,
+    this.wrappedBuilder,
   })  : _type = _Type.cloudFirestore,
         assert(forEachSnap != null),
         this.dbQuery = null,
@@ -270,6 +274,7 @@ class FBListView<T extends Model> extends StatefulWidget {
     this.skipLoaderIfItemExist = false,
     this.itemsAfterFetch,
     this.limitBy = 15,
+    this.wrappedBuilder,
   })  : assert(!(dbQuery == null && dbReference == null)),
         assert(forEachJson != null),
         _type = _Type.realtimeDatabase,
@@ -377,7 +382,12 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
   }
 
   @override
-  Widget build(BuildContext context) => _smartRefresher();
+  Widget build(BuildContext context) {
+    if (widget.wrappedBuilder != null)
+      return widget.wrappedBuilder!(_logic!, _smartRefresher());
+    else
+      return _smartRefresher();
+  }
 
   _listView(FBListViewLogic<T> model) {
     var isEmptyWidget =
