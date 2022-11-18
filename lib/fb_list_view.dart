@@ -81,10 +81,10 @@ class FBListView<T extends Model> extends StatefulWidget {
   final Function(Future<void> Function())? refresher;
 
   /// The header widget when refreshing.
-  final Widget? headerWidget;
+  final Widget? Function(FBListViewLogic<T>? logic)? headerWidget;
 
   /// The footer widget when on paginate load.
-  final Widget? footerWidget;
+  final Widget? Function(FBListViewLogic<T>? logic)? footerWidget;
 
   /// Create with sliver list. Callback the
   /// the sliver widget list version.
@@ -392,8 +392,9 @@ class _FBListViewState<T extends Model> extends State<FBListView<T>> {
         enablePullDown: this.widget.isReverse ? false : true,
         enablePullUp: true,
         cacheExtent: widget.cacheExtent,
-        header: this.widget.headerWidget,
-        footer: this.widget.footerWidget ?? FBListView.emptyFooter(),
+        header: this.widget.headerWidget?.call(_logic),
+        footer:
+            this.widget.footerWidget?.call(_logic) ?? FBListView.emptyFooter(),
         onRefresh: () => model.onRefresh(),
         onLoading: () => model.onLoading(),
         physics: widget.scrollPhysics,
