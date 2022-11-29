@@ -185,7 +185,7 @@ class FBListView<T extends Model> extends StatefulWidget {
   /// then can be modified.
   /// Return the new list object that has
   /// been modified.
-  final Future<List<T?>> Function(List<T?>)? itemsAfterFetch;
+  final Future<List<T?>> Function(List<T?>, FetchingAs)? itemsAfterFetch;
 
   /// Paginate 30 items.
   final int limitBy;
