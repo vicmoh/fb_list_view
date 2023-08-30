@@ -15,6 +15,12 @@ enum FBTypes {
   cloudFirestore
 }
 
+enum FetchingAs {
+  newData,
+  firstPage,
+  nextPage,
+}
+
 /// View logic for managing list Firebase fetches and pagination.
 class FBListViewLogic<T extends Model> extends ViewLogic
     with UniquifyListModel<T> {
@@ -83,7 +89,10 @@ class FBListViewLogic<T extends Model> extends ViewLogic
   /// then can be modified.
   /// Return the new list object that has
   /// been modified.
-  final Future<List<T?>> Function(List<T?>)? itemsAfterFetch;
+  final Future<List<T?>> Function(
+    List<T?>,
+    FetchingAs,
+  )? itemsAfterFetch;
 
   /* -------------------------------- Firestore ------------------------------- */
 
@@ -378,7 +387,8 @@ class FBListViewLogic<T extends Model> extends ViewLogic
           Map<String, dynamic>.from(event.snapshot.value as Map? ?? {})),
     ];
 
-    if (itemsAfterFetch != null) newItems = await itemsAfterFetch!(newItems);
+    if (itemsAfterFetch != null)
+      newItems = await itemsAfterFetch!(newItems, FetchingAs.newData);
     this.addItems(newItems);
   }
 
@@ -439,7 +449,8 @@ class FBListViewLogic<T extends Model> extends ViewLogic
           })),
           growable: true);
 
-      if (itemsAfterFetch != null) newItems = await itemsAfterFetch!(newItems);
+      if (itemsAfterFetch != null)
+        newItems = await itemsAfterFetch!(newItems, FetchingAs.newData);
       this.addItems(newItems);
     } else {
       var newItems = <T?>[];
@@ -452,7 +463,8 @@ class FBListViewLogic<T extends Model> extends ViewLogic
         }
       }
 
-      if (itemsAfterFetch != null) newItems = await itemsAfterFetch!(newItems);
+      if (itemsAfterFetch != null)
+        newItems = await itemsAfterFetch!(newItems, FetchingAs.newData);
       this.addItems(newItems);
     }
   }
@@ -512,7 +524,11 @@ class FBListViewLogic<T extends Model> extends ViewLogic
       _printErr(err);
     }
 
-    if (itemsAfterFetch != null) data = await itemsAfterFetch!(data);
+    if (itemsAfterFetch != null)
+      data = await itemsAfterFetch!(
+        data,
+        isNext ? FetchingAs.nextPage : FetchingAs.firstPage,
+      );
 
     if (isNext)
       _refreshController?.loadComplete();
@@ -544,7 +560,11 @@ class FBListViewLogic<T extends Model> extends ViewLogic
       _printErr(err);
     }
 
-    if (itemsAfterFetch != null) data = await itemsAfterFetch!(data);
+    if (itemsAfterFetch != null)
+      data = await itemsAfterFetch!(
+        data,
+        isNext ? FetchingAs.nextPage : FetchingAs.firstPage,
+      );
 
     if (isNext)
       _refreshController?.loadComplete();
