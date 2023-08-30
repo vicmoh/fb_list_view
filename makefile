@@ -1,5 +1,5 @@
 git:
-	flutter format ./lib/
+	dart format ./lib/
 	flutter analyze
 	git add -A
 	git commit -m '$(m)'
